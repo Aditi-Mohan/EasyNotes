@@ -5,6 +5,7 @@ token_v2 = "7a891b7b74950f98146c6059c3939c3dea5be5dedb08440b072aa50199bce91bb5d8
 parent_page_url_or_id = "https://www.notion.so/EasyNotes-439bbafab39d4ad797ccb60292a1be4c"
 client = NotionClient(token_v2=token_v2)
 parent_page = client.get_block(parent_page_url_or_id)
+parent_page.children.add_new(DividerBlock)
 # print(parent_page)
 # for child in parent_page.children:
 #     print(child)
