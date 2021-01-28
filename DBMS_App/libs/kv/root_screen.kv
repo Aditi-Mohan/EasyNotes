@@ -24,29 +24,30 @@
             id: nav_bar
 
             NavigationItem:
-                text: "OVERVIEW"
-                icon: "chart-pie"
+                text: "HOME"
+                icon: "home"
+                # icon: "chart-pie"
                 on_release:
                     scr_manager.transition.direction = "right"
                     scr_manager.current = "OVERVIEW"
 
             NavigationItem:
                 text: "SUBJECTS"
-                icon: "book-multiple"
+                icon: "book-open-variant"
                 on_release:
                     scr_manager.transition.direction = "right" \
                     if scr_manager.current in ["BILLS", "BUDGETS", "SETTINGS"] \
                     else "left"
                     scr_manager.current = "ACCOUNTS"
 
-            # NavigationItem:
-            #     text: "BILLS"
-            #     icon: "currency-usd-off"
-            #     on_release:
-            #         scr_manager.transition.direction = "right" \
-            #         if scr_manager.current in ["BUDGETS", "SETTINGS"] \
-            #         else "left"
-            #         scr_manager.current = "BILLS"
+            NavigationItem:
+                text: "FRIENDS"
+                icon: "account-plus"
+                on_release:
+                    scr_manager.transition.direction = "right" \
+                    if scr_manager.current in ["BUDGETS", "SETTINGS"] \
+                    else "left"
+                    scr_manager.current = "BILLS"
 
             # NavigationItem:
             #     text: "BUDGETS"
@@ -73,8 +74,8 @@
             RallyAccountsScreen:
                 name: "ACCOUNTS"
 
-            # RallyBillsScreen:
-            #     name: "BILLS"
+            RallyBillsScreen:
+                name: "BILLS"
 
             # RallyBudgetsScreen:
             #     name: "BUDGETS"
