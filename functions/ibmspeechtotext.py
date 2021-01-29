@@ -24,7 +24,7 @@ for i in result:
     res = alts[imax]['transcript']
     text += [res+"."]
 print(text)
-write_transcript("Lesson 2", transcript=text, sub_name="Happiness")
+write_transcript("Lesson 2", transcript=text, sub_name="Sample")
 
 # Frame as Paraghraphs
 # slice audio into parts and send to model to show in progress bar

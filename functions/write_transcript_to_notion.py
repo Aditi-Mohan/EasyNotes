@@ -1,5 +1,6 @@
 from notion.client import NotionClient
 from notion.block import *
+from datetime import datetime
 
 def get_user_token():
     # replace with fetching token for that user from database
@@ -29,6 +30,11 @@ def write_transcript(title, transcript, sub_name):
     new_page.children.add_new(DividerBlock)
     for each in transcript:
         text_block = new_page.children.add_new(TextBlock, title=each)
+    now = datetime.now()
+    date_of_creation = now.strftime(r"%d-%m-%Y, %H:%M")
+    date_block = new_page.children.add_new(TextBlock, title="Created on: "+date_of_creation)
+    date_block.set("format.block_color", "blue_background")
+    
 
 
 if __name__ == "__main__":
@@ -36,4 +42,4 @@ if __name__ == "__main__":
                 "dksjkf fjkhgkdjhfg jdhfg djfhgk djfhgk jdhfkgjhdkfjhg dkjfhgkjh kdjfhgjdfhgkjdhf jhfkgjhdfjghkdjfhg djfghk jdfhgkdfjh",
                 "osidfjosidfi sodifiguhf jfghdkjfhgkdjhf dkjfhgkjhktjehrkj jhksjdhkkjshd fsjdhfkjhfk skdjfh jhjhgkj fkjghkdjfhgkdjf"]
     
-    write_transcript("Lesson 1", transcript=transcript, sub_name="Happiness")
+    write_transcript("Lesson 4", transcript=transcript, sub_name="Happiness")

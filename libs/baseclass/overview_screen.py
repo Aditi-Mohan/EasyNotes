@@ -2,6 +2,7 @@ from kivy.properties import ListProperty, StringProperty
 
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.screen import MDScreen
+from kivymd.uix.button import MDFlatButton
 
 
 class RallyOverviewScreen(MDScreen):
