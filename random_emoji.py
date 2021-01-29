@@ -1,6 +1,6 @@
 import random
-def random_icon():
-    test=['😀',
+
+    emojis=['😀',
     '😃',
     '😄',
     '😁',
@@ -780,8 +780,6 @@ def random_icon():
     '🎰',
     '🧩']
 
-    emoji = random.choice(test)
-    print(emoji)
-
-random_icon()
-    
+def random_icon():
+    emoji = random.choice(emojis)
+    return emoji
