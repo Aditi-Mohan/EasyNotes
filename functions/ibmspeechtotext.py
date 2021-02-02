@@ -2,15 +2,15 @@ from ibm_watson import SpeechToTextV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from write_transcript_to_notion import write_transcript
 
-def get_audio_file():
-    return "converted.wav"
+def get_audio_file_path():
+    return "../../Desktop/converted.wav"
 
 api_key = IAMAuthenticator("acyFMIII31gP3u8wJKIwnDAS6mx5NMiUV698g9VFsodj")
 speech_2_text = SpeechToTextV1(authenticator=api_key)
 speech_2_text.set_service_url("https://api.jp-tok.speech-to-text.watson.cloud.ibm.com/instances/f8ab0ba3-dcfd-427f-8506-d3822ca14d21")
 
-audio = get_audio_file()
-with open(audio, "rb") as audio_file:
+audio_file_path = get_audio_file_path()
+with open(audio_file_path, "rb") as audio_file:
     suffix = audio[audio.index('.')+1:]
     result = speech_2_text.recognize(
         audio=audio_file,
