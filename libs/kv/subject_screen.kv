@@ -1,7 +1,28 @@
 
 <SubjectScreen>
     GridLayout:
+        padding: [0, 20, 0, 0]
         cols: 1
+        row_default_height: 40
 
-        Label:
-            text: root.title
+        GridLayout:
+            cols: 2
+
+            MDIcon:
+                icon: "book"
+                padding: 20, 0
+
+            Label:
+                text_size: self.size
+                text: root.title
+                font_size: 28
+                halign: 'left'
+                padding: 20, 0
+        
+        ScrollView:
+		    id: scroll_view
+		    height: root.height
+		    size_hint_y: None
+		
+		    MDList:
+			    id: list_view
