@@ -23,7 +23,7 @@ class RallyAccountsScreen(MDScreen):
         # sc = self.ids.scr_manager
         print(tile.text)
         sc = self.parent.parent.parent.parent
-        sc.switch_to(SubjectScreen(name=tile.text), transition=SlideTransition(), direction='up')
+        sc.switch_to(SubjectScreen(title=tile.text, color=tile.text_color), transition=SlideTransition(), direction='up')
         # print(sc.current)
 
 

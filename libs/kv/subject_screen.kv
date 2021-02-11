@@ -5,19 +5,37 @@
         cols: 1
         row_default_height: 40
 
-        GridLayout:
-            cols: 2
+        BoxLayout:
+            orientation: 'horizontal'
 
-            MDIcon:
-                icon: "book"
-                padding: 20, 0
+            MDIconButton:
+                icon:'arrow-left'
+                theme_text_color: 'Custom'
+                text_color: root.color
+                on_press: root.back()
 
-            Label:
-                text_size: self.size
-                text: root.title
-                font_size: 28
-                halign: 'left'
-                padding: 20, 0
+            IconLeftWidget:
+                icon:'book'
+                theme_text_color: 'Custom'
+                text_color: root.color
+                size: 50,50
+                padding_right: 20
+
+            BoxLayout:
+                orientation: 'vertical'
+                spacing: 10
+                
+                Label:
+                    text_size: self.width, None
+                    text: '[b]'+root.title+'[/b]'
+                    font_size: 28
+                    color: root.color
+                    markup: True
+                Label:
+                    text_size: self.width, None
+                    text: 'Total Notes: 5'
+                    font_size: 14
+                    color: [0.5, 0.5, 0.5, 1]
         
         ScrollView:
 		    id: scroll_view
