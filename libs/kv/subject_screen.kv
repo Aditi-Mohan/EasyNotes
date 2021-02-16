@@ -1,8 +1,8 @@
 
 <SubjectScreen>
     GridLayout:
-        padding: [0, 20, 0, 0]
         cols: 1
+        padding: [0, 20, 0, 0]
         row_default_height: 40
 
         BoxLayout:
@@ -31,6 +31,7 @@
                     font_size: 28
                     color: root.color
                     markup: True
+
                 Label:
                     text_size: self.width, None
                     text: 'Total Notes: 5'
@@ -44,3 +45,29 @@
 		
 		    MDList:
 			    id: list_view
+        
+        FloatLayout:
+
+            MDRoundFlatIconButton:
+                icon: 'upload'
+                text: 'Upload Video'
+                font_size: 16
+                theme_text_color: "Custom"
+                text_color: (1, 1, 1, 1)
+                line_color: root.color
+                icon_color: (1, 1, 1, 1)
+                md_bg_color: root.btn_color
+                pos: self.parent.width-self.width-20, self.height+25
+                on_release: root.upload('video')
+            
+            MDRoundFlatIconButton:
+                icon: 'auto-upload'
+                text: 'Upload Audio'
+                font_size: 16
+                theme_text_color: "Custom"
+                text_color: (1, 1, 1, 1)
+                line_color: root.color
+                icon_color: (1, 1, 1, 1)
+                md_bg_color: root.btn_color
+                pos: self.parent.width-self.width-20, 15
+                on_release: root.upload('audio')
