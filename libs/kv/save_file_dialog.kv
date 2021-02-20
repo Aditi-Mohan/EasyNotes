@@ -1,0 +1,17 @@
+<SaveFile>:
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDRoundFlatIconButton:
+            icon: 'save'
+            text: 'Save'
+            on_release: root.pre_save()
+
+        MDRoundFlatIconButton:
+            icon: 'cancel'
+            text: 'Cancel'
+            on_release: root.cancel()
+
+        MDTextField:
+            id: sub_name
+            hint_text: 'Subject Name'

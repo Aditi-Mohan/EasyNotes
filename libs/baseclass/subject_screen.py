@@ -4,9 +4,12 @@ from kivymd.uix.list import TwoLineIconListItem, IconLeftWidget
 from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
+from kivy.uix.progressbar import ProgressBar
 
 from libs.baseclass.root_screen import RallyRootScreen
 from libs.baseclass.file_chooser import ChooseFile
+from libs.baseclass.save_file_dialog import SaveFile
+from functions.ibmspeechtotext import generate_transcript
 import utils.file_extensions as fe
 
 import os
@@ -53,17 +56,28 @@ class SubjectScreen(MDScreen):
     def dismiss_popup(self):
         self._popup.dismiss()
 
+    def save(self):
+        print(self._popup.content.sub_name)
+        self._popup.dismiss()
+
     def select_file(self, path, selection):
+
         print('selected file: ')
         print(path)
         print(selection)
 
         self._popup.dismiss()
 
-        # text=''
-        # for i in selection:
-        #     text+=i+'\n'
-        # content = Label(text=text)
+        content = ProgressBar()
+        self._popup = Popup(title='Processing', content=content, size_hint=(0.9,0.9))
+        self._popup.open()
+
+        for i in selection:
+            generate_transcript(i)
+        
+        content = SaveFile(cancel=self.dismiss_popup, save=self.save)
+        self._popup = Popup(title='Save File', content=content, size_hint=(0.9,0.9))
+        self._popup.open()
 
         # self._popup = Popup(title='Chosen File', content=content, size_hint=(0.9, 0.9))
         # self._popup.open()
