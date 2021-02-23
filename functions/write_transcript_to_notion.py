@@ -26,14 +26,14 @@ def write_transcript(title, transcript, sub_name):
     homepage = client.get_block(homepage_url)
     sub_page = get_doc(homepage, sub_name)
     new_page = sub_page.children.add_new(PageBlock, title=title)
-    transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
-    new_page.children.add_new(DividerBlock)
-    for each in transcript:
-        text_block = new_page.children.add_new(TextBlock, title=each)
     now = datetime.now()
     date_of_creation = now.strftime(r"%d-%m-%Y, %H:%M")
     date_block = new_page.children.add_new(TextBlock, title="Created on: "+date_of_creation)
     date_block.set("format.block_color", "blue_background")
+    transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
+    new_page.children.add_new(DividerBlock)
+    for each in transcript:
+        text_block = new_page.children.add_new(TextBlock, title=each)
     
 
 

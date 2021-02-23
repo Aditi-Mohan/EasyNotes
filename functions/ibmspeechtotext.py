@@ -1,6 +1,6 @@
 from ibm_watson import SpeechToTextV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from functions.write_transcript_to_notion import write_transcript
+# from functions.write_transcript_to_notion import write_transcript
 
 api_key = IAMAuthenticator("acyFMIII31gP3u8wJKIwnDAS6mx5NMiUV698g9VFsodj")
 speech_2_text = SpeechToTextV1(authenticator=api_key)
@@ -25,8 +25,11 @@ def generate_transcript(audio_file_path):
             imax = confs.index(max(confs))
         res = alts[imax]['transcript']
         text += [res[:len(res)-1]+"."]
+    
     print(text)
-    write_transcript("Lesson 2", transcript=text, sub_name="Sample")
+    return text
+    
+    # write_transcript("Lesson 2", transcript=text, sub_name="Sample")
 
 # Frame as Paraghraphs
 # slice audio into parts and send to model to show in progress bar
