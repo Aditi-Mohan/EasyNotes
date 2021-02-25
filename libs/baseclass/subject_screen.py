@@ -50,7 +50,7 @@ class SubjectScreen(MDScreen):
     
     def back(self):
         sc = self.parent
-        sc.switch_to(RallyRootScreen(), transition=SlideTransition(), direction='right')
+        sc.switch_to(RallyRootScreen(back_press='SUBJECTS'), transition=SlideTransition(), direction='right')
 
     def upload(self, file_type):
         self.file_type = file_type

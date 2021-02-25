@@ -7,7 +7,6 @@ from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 
 from utils.random_color import random_kivy_colors
 from libs.baseclass.subject_screen import SubjectScreen
-from libs.baseclass.root_screen import RallyRootScreen
 
 class RallyAccountsScreen(MDScreen):
     subs = [{'sub': 'DAA', 'faculty': 'Abhay Kolhe'},
