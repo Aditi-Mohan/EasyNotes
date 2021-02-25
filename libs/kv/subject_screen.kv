@@ -1,0 +1,73 @@
+
+<SubjectScreen>
+    GridLayout:
+        cols: 1
+        padding: [0, 20, 0, 0]
+        row_default_height: 40
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            MDIconButton:
+                icon:'arrow-left'
+                theme_text_color: 'Custom'
+                text_color: root.color
+                on_press: root.back()
+
+            IconLeftWidget:
+                icon:'book'
+                theme_text_color: 'Custom'
+                text_color: root.color
+                size: 50,50
+                padding_right: 20
+
+            BoxLayout:
+                orientation: 'vertical'
+                spacing: 10
+                
+                Label:
+                    text_size: self.width, None
+                    text: '[b]'+root.title+'[/b]'
+                    font_size: 28
+                    color: root.color
+                    markup: True
+
+                Label:
+                    text_size: self.width, None
+                    text: 'Total Notes: 5'
+                    font_size: 14
+                    color: [0.5, 0.5, 0.5, 1]
+        
+        ScrollView:
+		    id: scroll_view
+		    height: root.height
+		    size_hint_y: None
+		
+		    MDList:
+			    id: list_view
+        
+        FloatLayout:
+
+            MDRoundFlatIconButton:
+                icon: 'upload'
+                text: 'Upload Video'
+                font_size: 16
+                theme_text_color: "Custom"
+                text_color: (1, 1, 1, 1)
+                line_color: root.color
+                icon_color: (1, 1, 1, 1)
+                md_bg_color: root.btn_color
+                pos: self.parent.width-self.width-20, self.height+25
+                on_release: root.upload('video')
+            
+            MDRoundFlatIconButton:
+                icon: 'auto-upload'
+                text: 'Upload Audio'
+                font_size: 16
+                theme_text_color: "Custom"
+                text_color: (1, 1, 1, 1)
+                line_color: root.color
+                icon_color: (1, 1, 1, 1)
+                md_bg_color: root.btn_color
+                pos: self.parent.width-self.width-20, 15
+                on_release: root.upload('audio')

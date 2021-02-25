@@ -1,12 +1,12 @@
 import random
 
-colors = ['Black', 'Gray', 'Brown', 'Orange',
+colors = ['Default', 'Gray', 'Brown', 'Orange',
         'Yellow', 'Teal', 'Blue', 'Purple',
         'Pink', 'Red']
+# if default then do not nedd to specify color for notion
         
 kivy_background_colors = {
     'Default': (1, 1, 1, 1),
-    'White': (1, 1, 1, 1),
     'Gray': (0.9215686274509803, 0.9254901960784314, 0.9294117647058824, 1),
     'Brown': (0.9137254901960784, 0.8980392156862745, 0.8901960784313725, 1),
     'Orange': (0.9803921568627451, 0.9215686274509803, 0.8666666666666667, 1),
@@ -20,7 +20,6 @@ kivy_background_colors = {
 
 kivy_text_colors = {
     'Default': (0.21568627450980393, 0.20784313725490197, 0.1843137254901961, 1),
-    'Black': (0.21568627450980393, 0.20784313725490197, 0.1843137254901961, 1),
     'Gray': (0.21568627450980393, 0.20784313725490197, 0.1843137254901961, 1),
     'Brown': (0.39215686274509803, 0.2784313725490196, 0.22745098039215686, 1),
     'Orange': (0.8509803921568627, 0.45098039215686275, 0.050980392156862744, 1),
@@ -35,6 +34,10 @@ kivy_text_colors = {
 def random_color():
     color = random.choice(colors)
     return color
+
+def random_kivy_colors(colors_array=kivy_text_colors):
+    color = random.choice(colors)
+    return colors_array[color]
 
 def rgb_to_kivy(r, g, b, a=1):
     r = r/255

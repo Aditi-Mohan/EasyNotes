@@ -1,0 +1,23 @@
+<SaveFile>:
+    FloatLayout:
+        orientation: 'vertical'
+
+        MDTextField:
+            id: file_name
+            hint_text: 'File Name'
+            size_hint_x: 0.8           
+            pos_hint: {'x': 0.1, 'y': 0.9}
+
+        MDRoundFlatIconButton:
+            id: save
+            icon: 'content-save'
+            text: 'Save'
+            pos: self.parent.size[0]*0.75, self.parent.size[1]*0.9
+            on_release: root.pre_save()
+
+        MDRoundFlatIconButton:
+            id: cancel
+            icon: 'cancel'
+            text: 'Cancel'
+            pos: (self.parent.size[0]*0.75) - self.size[0], self.parent.size[1]*0.9
+            on_release: root.cancel()

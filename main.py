@@ -26,6 +26,7 @@ KV = """
 #:import RallyRootScreen libs.baseclass.root_screen.RallyRootScreen
 
 ScreenManager:
+    id: 'scr_manager'
     transition: FadeTransition()
 
     RallyRegisterScreen:
