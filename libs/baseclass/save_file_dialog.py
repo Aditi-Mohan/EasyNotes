@@ -1,6 +1,5 @@
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty, ObjectProperty
-from functions.write_transcript_to_notion import write_transcript
 
 class SaveFile(BoxLayout):
     sub_name = StringProperty()
