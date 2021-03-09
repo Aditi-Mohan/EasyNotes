@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 
 from kivy.lang import Builder
-
 from kivymd.app import MDApp
 # 
 
@@ -37,6 +36,8 @@ ScreenManager:
 
 """
 
+import dbconn
+dbconn.initialse()
 
 class MDRally(MDApp):
     def __init__(self, **kwargs):

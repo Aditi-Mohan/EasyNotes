@@ -54,6 +54,7 @@ class SubjectScreen(MDScreen):
 
     def upload(self, file_type):
         self.file_type = file_type
+        print(fe.file_extensions[file_type])
         if(len(self.new_transcript) != 0):
             self.new_transcript = []
         content = ChooseFile(select=self.select_file, cancel=self.dismiss_popup, file_filter=fe.file_extensions[file_type])

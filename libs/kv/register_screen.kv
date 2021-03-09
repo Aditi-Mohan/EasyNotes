@@ -29,12 +29,18 @@
 	        spacing: dp(20)
 
 	        RallyTextField:
+				id: nm
 	            hint_text: "Username"
 
 	        RallyTextField:
+				id: pw
 	            hint_text: "Password"
 	            password: True
 	            password_mask: "*"
+			
+			MDFlatButton:
+				text: 'Press'
+				on_release: root.login(root.ids.nm.text, root.ids.pw.text)
 
 	    MDBoxLayout:
 	        adaptive_height: True
@@ -42,6 +48,7 @@
 	        spacing: dp(20)
 
 	        MDIconButton:
+				id: fingpr
 	        	icon: 'fingerprint'
 	        	pos_hint: {"center_x": .5}
 	        	user_font_size: dp(62)
