@@ -4,7 +4,7 @@ from datetime import datetime
 
 def get_user_token():
     # replace with fetching token for that user from database
-    return "7a891b7b74950f98146c6059c3939c3dea5be5dedb08440b072aa50199bce91bb5d8577ecb9bcb0b4ac047c6daf144df7e452824e7d6b8a64c8dde7d67ea0b104855df57a4db8b94003411ec1628"
+    return "e7efb6c4a8ccd0d1e3c2720985ea3422f71d16c9b62da79a2e4ad12d46c3f73c5799b54493f05f92deff9ef5cb82f11e7977e21c9b53634817c04a9d0ae0523286e65d2392d4e70b23e16fcf7d48"
 
 def get_home_page_url():
     # replace with fetching homepage url for that user from database
@@ -36,10 +36,26 @@ def write_transcript(title, transcript, sub_name):
         text_block = new_page.children.add_new(TextBlock, title=each)
     
 
+async def add_subpage_to_notion(subname):
+    token_v2 = get_user_token()
+    homepage_url = get_home_page_url()
+    client = NotionClient(token_v2=token_v2)
+    homepage = client.get_block(homepage_url)
+    newsub = homepage.children.add_new(PageBlock, title=subname)
+    return newsub.get_browseable_url()
 
-if __name__ == "__main__":
-    transcript = ["kflfn kfjkjfk ddkjfjdnfknvkdjf dkfjvndkfnjvkdjf djfv kdjfvkdjnfvkjdnfkvj kdjdfnvkdjfnvkdf vkdjfvdkjfvndkj fjv",
-                "dksjkf fjkhgkdjhfg jdhfg djfhgk djfhgk jdhfkgjhdkfjhg dkjfhgkjh kdjfhgjdfhgkjdhf jhfkgjhdfjghkdjfhg djfghk jdfhgkdfjh",
-                "osidfjosidfi sodifiguhf jfghdkjfhgkdjhf dkjfhgkjhktjehrkj jhksjdhkkjshd fsjdhfkjhfk skdjfh jhjhgkj fkjghkdjfhgkdjf"]
+async def add_unitpage_to_notion(unitname, subname):
+    token_v2 = get_user_token()
+    homepage_url = get_home_page_url()
+    client = NotionClient(token_v2=token_v2)
+    homepage = client.get_block(homepage_url)
+    sub_page = get_doc(homepage, subname)
+    newunit = sub_page.children.add_new(PageBlock, title=unitname)
+    return newunit.get_browseable_url()
+
+# if __name__ == "__main__":
+#     transcript = ["kflfn kfjkjfk ddkjfjdnfknvkdjf dkfjvndkfnjvkdjf djfv kdjfvkdjnfvkjdnfkvj kdjdfnvkdjfnvkdf vkdjfvdkjfvndkj fjv",
+#                 "dksjkf fjkhgkdjhfg jdhfg djfhgk djfhgk jdhfkgjhdkfjhg dkjfhgkjh kdjfhgjdfhgkjdhf jhfkgjhdfjghkdjfhg djfghk jdfhgkdfjh",
+#                 "osidfjosidfi sodifiguhf jfghdkjfhgkdjhf dkjfhgkjhktjehrkj jhksjdhkkjshd fsjdhfkjhfk skdjfh jhjhgkj fkjghkdjfhgkdjf"]
     
-    write_transcript("Lesson 4", transcript=transcript, sub_name="Happiness")
+#     write_transcript("Lesson 4", transcript=transcript, sub_name="Happiness")

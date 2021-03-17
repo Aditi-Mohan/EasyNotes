@@ -14,8 +14,7 @@ class AddSubjectDialog(BoxLayout):
     # To monitor changes, we can bind to color property changes
     def on_color(self):
         instance = self._popup.content.ids.clr_picker
-        print ([*instance.color])  #  or value
-        self.ids.clr_disp.my_color = instance.color
+        self.ids.clr_disp.my_color = instance.color #  or value
         self.popup_dismiss()
 
     def choose_color(self):
@@ -30,5 +29,6 @@ class AddSubjectDialog(BoxLayout):
         color = self.ids.clr_disp.my_color
         fac_name = self.ids.fac_name.text
         if name != '' and fac_name != '':
+            print(color)
             self.add_sub(name, fac_name, color)
         

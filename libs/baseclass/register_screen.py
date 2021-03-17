@@ -11,14 +11,15 @@ class RallyRegisterScreen(MDScreen):
         q = 'select * from user where name=%s and password=%s'
         db.mycursor.execute(q, (name, passw))
         a = db.mycursor.fetchall()
+        print(len(a))
         if len(a) == 1:
             user = User(*a[0])
-        async def set_globals():
-            gv.user = user
-            temp = await gv.get_subs(user.uid)
-        asynckivy.start(set_globals())
-        print(user.uid)
-        print(user.name)
-        print(user.password)
-        self.ids.fingpr.dispatch('on_release')
+            async def set_globals():
+                gv.user = user
+                temp = await gv.get_subs(user.uid)
+            asynckivy.start(set_globals())
+            print(user.uid)
+            print(user.name)
+            print(user.password)
+            self.ids.fingpr.dispatch('on_release')
         return

@@ -5,6 +5,7 @@ from kivymd.uix.list import MDList, TwoLineIconListItem, IconLeftWidget
 from kivymd.uix.gridlayout import MDGridLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.uix.popup import Popup
+from kivymd.utils import asynckivy
 
 from utils.random_color import random_kivy_colors
 from libs.baseclass.subject_screen import SubjectScreen
@@ -27,9 +28,9 @@ class RallyAccountsScreen(MDScreen):
     
     def go_to_sub_screen(self, tile):
         # sc = self.ids.scr_manager
-        print(tile.text)
         sc = self.parent.parent.parent.parent
-        sc.switch_to(SubjectScreen(title=tile.text, color=tile.text_color), transition=SlideTransition(), direction='up')
+        sub = self.subs[len(self.subs) - 1 - self.ids.list_view.children.index(tile)]
+        sc.switch_to(SubjectScreen(sub_id=sub.subject_id, title=tile.text, color=tile.text_color), transition=SlideTransition(), direction='up')
         # print(sc.current)
 
     def add_subject(self):
@@ -52,11 +53,8 @@ class RallyAccountsScreen(MDScreen):
                 )
         item.add_widget(icon)
         self.ids.list_view.add_widget(item)
-        q = 'insert into subject (sub_name, uid, fac_name, r, g, b, a) values(%s, %s, %s, %s, %s, %s, %s)'
-        params = (name, gv.user.uid, fac_name, color[0], color[1], color[2], color[3])
-        db.mycursor.execute(q, params)
-        db.mydb.commit()
-        # gv.get_subs(gv.user.uid) FIX THIS
+        asynckivy.start(gv.add_subject(name, gv.user.uid, fac_name, color))
+        asynckivy.start(gv.get_subs(gv.user.uid))
         self._popup.dismiss()
         
 
@@ -64,7 +62,6 @@ class RallyAccountsScreen(MDScreen):
         list_view = self.ids.list_view
         list_view.clear_widgets()
         self.subs = gv.subjects
-        print(len(self.subs))
         for i in self.subs:
             # color = random_kivy_colors()
             item = TwoLineIconListItem(
