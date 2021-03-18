@@ -7,3 +7,19 @@
 		
 		MDList:
 			id: list_view
+		
+	FloatLayout:
+		id: buttons
+
+        MDRoundFlatIconButton:
+            icon: 'book-plus'
+            text: 'Add Subject'
+            font_size: 16
+            theme_text_color: "Custom"
+            text_color: (51/255, 51/255, 61/255, 1)
+            line_color: (51/255, 51/255, 61/255, 1)
+            icon_color: (51/255, 51/255, 61/255, 1)
+            md_bg_color: (1, 1, 1, 0.75)
+            pos: self.parent.width-self.width-20, self.height+25
+            on_release: root.add_subject()
+            

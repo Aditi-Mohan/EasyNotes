@@ -1,0 +1,44 @@
+<AddSubjectDialog>:
+    FloatLayout:
+
+        MDTextField:
+            id: sub_name
+            hint_text: 'Subject Name'
+            size_hint_x: 0.8           
+            pos_hint: {'x': 0.1, 'y': 0.8}
+                
+        MDTextField:
+            id: fac_name
+            hint_text: 'Faculty Name'
+            size_hint_x: 0.8           
+            pos_hint: {'x': 0.1, 'y': 0.6}
+
+        MDRaisedButton:
+            id: pick_clr
+            text: 'PICK COLOR'
+            theme_text_color: "Custom"
+            text_color: (51/255, 51/255, 61/255, 1)
+            md_bg_color: 1, 1, 1, 0.7
+            pos_hint: {'x': 0.7, 'y':0.5}
+            on_release: root.choose_color()
+
+        Widget:
+            id: clr_disp
+            my_color: 1, 1, 1, 1
+
+            canvas:
+                Color:
+                    rgba: self.my_color
+                Rectangle:
+                    id: clr_disp
+                    size: root.ids.pick_clr.size[1], root.ids.pick_clr.size[1]
+                    pos: self.size[0]*0.7, self.size[1]*0.59
+        
+        MDRoundFlatButton:
+            id: done
+            text: 'ADD'
+            theme_text_color: "Custom"
+            text_color: (51/255, 51/255, 61/255, 1)
+            md_bg_color: 1, 1, 1, 0.5
+            pos: (self.parent.size[0]/2), self.parent.size[0]*0.1
+            on_release: root.finish()

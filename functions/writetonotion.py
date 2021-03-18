@@ -271,6 +271,18 @@ def get_collection_schema():
         "dV$q": {"name": "Files", "type": "file"},
         "title": {"name": "Name", "type": "title"},
     }
+def run_smoke_test(token, url):
+    client = NotionClient(token_v2=token)
+
+    parent_page = client.get_block(url)
+
+    page = parent_page.children.add_new(
+        PageBlock,
+        title="Smoke test at {}".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+
+    print("Created base smoke test page at:", page.get_browseable_url())
+
 
 if __name__ == "__main__":
-    run_live_smoke_test("7a891b7b74950f98146c6059c3939c3dea5be5dedb08440b072aa50199bce91bb5d8577ecb9bcb0b4ac047c6daf144df7e452824e7d6b8a64c8dde7d67ea0b104855df57a4db8b94003411ec1628", "https://www.notion.so/Notion-API-Trial-a9e15ac8fb79483fa177468e21df7113")
+    run_smoke_test("e7efb6c4a8ccd0d1e3c2720985ea3422f71d16c9b62da79a2e4ad12d46c3f73c5799b54493f05f92deff9ef5cb82f11e7977e21c9b53634817c04a9d0ae0523286e65d2392d4e70b23e16fcf7d48", 'https://www.notion.so/EasyNotes-439bbafab39d4ad797ccb60292a1be4c')
