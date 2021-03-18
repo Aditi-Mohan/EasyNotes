@@ -7,6 +7,14 @@
             hint_text: 'File Name'
             size_hint_x: 0.8           
             pos_hint: {'x': 0.1, 'y': 0.9}
+        
+        Spinner:
+            id: units
+            text: 'Select Unit'
+            values: root.options
+            on_text: root.select_unit(units.text)
+            size_hint: (0.2, 0.05)
+            pos_hint: {'x': 0.1, 'y': 0.8}
 
         MDRoundFlatIconButton:
             id: save

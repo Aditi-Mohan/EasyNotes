@@ -19,21 +19,20 @@ def get_doc(homepage, sub_name):
     # fetch from database instead of
     # searching for the respective page among children of homepage
 
-def write_transcript(title, transcript, sub_name):
-    token_v2 = get_user_token()
-    homepage_url = get_home_page_url()
+async def write_transcript(title, transcript, token_v2, url, sub_name, unit_name, dt_of_creation):
     client = NotionClient(token_v2=token_v2)
-    homepage = client.get_block(homepage_url)
+    homepage = client.get_block(url)
     sub_page = get_doc(homepage, sub_name)
-    new_page = sub_page.children.add_new(PageBlock, title=title)
+    unit_page = get_doc(sub_page, unit_name)
+    new_page = unit_page.children.add_new(PageBlock, title=title)
     now = datetime.now()
-    date_of_creation = now.strftime(r"%d-%m-%Y, %H:%M")
-    date_block = new_page.children.add_new(TextBlock, title="Created on: "+date_of_creation)
+    date_block = new_page.children.add_new(TextBlock, title="Created on: "+dt_of_creation)
     date_block.set("format.block_color", "blue_background")
     transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
     new_page.children.add_new(DividerBlock)
     for each in transcript:
         text_block = new_page.children.add_new(TextBlock, title=each)
+    return unit_page.get_browseable_url()
     
 
 async def add_subpage_to_notion(subname):

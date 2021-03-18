@@ -1,7 +1,9 @@
 from kivymd.uix.screen import MDScreen
+from kivymd.uix.list import MDList
 from kivy.properties import StringProperty, ColorProperty, ObjectProperty, NumericProperty
 from kivymd.uix.list import OneLineIconListItem, TwoLineIconListItem, IconLeftWidget, IconRightWidget
 from kivy.uix.screenmanager import SlideTransition
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.progressbar import ProgressBar
@@ -34,6 +36,7 @@ class SubjectScreen(MDScreen):
     units = []
     new_transcript = []
     file_type = ''
+    notes = {}
     new_unit = None
     
     def on_pre_enter(self, *args):
@@ -110,22 +113,26 @@ class SubjectScreen(MDScreen):
 
     def save(self):
         file_name = self._popup.content.file_name
+        unit_name = self._popup.content.unit
+        unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
+        dt_of_creation = datetime.now().strftime(r"%m/%d/%Y, %H:%M:%S")
         async def write_file():
-            write_transcript(file_name, self.new_transcript, self.title)
-            # add note to database
+            link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation)
+            print('calling func')
+            await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation, link)
         asynckivy.start(write_file())
         self._popup.dismiss()
-        item = TwoLineIconListItem(
-            text= file_name,
-            secondary_text=  datetime.now().strftime(r"%m/%d/%Y, %H:%M:%S"),
-        )
-        icon = IconLeftWidget(
-            icon="note",
-            theme_text_color="Custom",
-            text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-        )
-        item.add_widget(icon)
-        self.ids.list_view.add_widget(item)
+        # item = TwoLineIconListItem(
+        #     text= file_name,
+        #     secondary_text= dt_of_creation,
+        # )
+        # icon = IconLeftWidget(
+        #     icon="note",
+        #     theme_text_color="Custom",
+        #     text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+        # )
+        # item.add_widget(icon)
+        # self.ids.list_view.add_widget(item)
 
     def select_file(self, path, selection):
 
@@ -150,9 +157,33 @@ class SubjectScreen(MDScreen):
 
         self._popup.dismiss()
         
-        content = SaveFile(cancel=self.dismiss_popup, save=self.save)
+        content = SaveFile(cancel=self.dismiss_popup, save=self.save, options=[x.unit_name for x in self.units])
         self._popup = Popup(title='Save File', content=content, size_hint=(0.9,0.9))
         self._popup.open()
     
     def show_notes(self, unittile):
-        self.ids.list_view.add_widget(OneLineIconListItem(text='trial'), self.ids.list_view.children.index(unittile)+1)
+        unit = [x for x in self.units if x.unit_name == unittile.text][0]
+        if self.title in gv.notes.keys():
+            if unit.unit_name in gv.notes[self.title].keys():
+                self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+            else:
+                asynckivy.start(gv.get_notes_for(gv.user.uid, self.title, unit.unit_id, unit.unit_name, self.title))
+                self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+        else:
+            asynckivy.start(gv.get_notes_for(gv.user.uid, self.title, unit.unit_id, unit.unit_name, self.title))
+            self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+        new_list = MDList()
+        for i in self.notes[unit.unit_name]:
+            item = OneLineIconListItem(
+                text= i.note_title,
+            )
+            icon = IconLeftWidget(
+                icon="subdirectory-arrow-right",
+                theme_text_color="Custom",
+                text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+            )
+            item.add_widget(icon)
+            new_list.add_widget(item)
+        bxlay = BoxLayout()
+        bxlay.add_widget(new_list)
+        self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))

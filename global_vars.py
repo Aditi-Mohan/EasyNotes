@@ -31,18 +31,22 @@ async def get_units_for(uid, sub_id, sub_name):
     global units
     units[sub_name] = uts
 
-async def get_notes_for(uid, sub_id, unit_id, unit_name):
+async def get_notes_for(uid, sub_id, unit_id, unit_name, sub_name):
     q = 'select * from notes where uid=%s and sub_id=%s and unit_id=%s'
     db.mycursor.execute(q, (uid, sub_id, unit_id))
     res = db.mycursor.fetchall()
     print(len(res))
     nt = [Note(*x) for x in res]
     global notes
-    notes[unit_name] = nt
+    if sub_name in notes.keys():
+        notes[sub_name][unit_name] = nt
+    else:
+        notes[sub_name] = {unit_name: nt}
+    print(notes)
 
 async def add_subject(name, uid, fac_name, color):
     link = await add_subpage_to_notion(name)
-    q = 'insert into subject values(%s, %s, %s, %s, %s, %s, %s, %s)'
+    q = 'insert into subject (sub_name, uid, fac_name, r, g, b, a, link) values(%s, %s, %s, %s, %s, %s, %s, %s)'
     params = (name, uid, fac_name, color[0], color[1], color[2], color[3], link)
     db.mycursor.execute(q, params)
     db.mydb.commit()
@@ -54,7 +58,9 @@ async def add_unit(name, sub_name, sub_id, uid):
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
-async def add_note(sub_id, uid, unit_id, note_id, title, link):
-        q = 'insert into notes values(%s, %s, %s, %s, %s, %s, %s)'
-        db.mycursor.execute(q, (note_id, title, uid, sub_id, unit_id, datetime.now().strftime(r"%Y-%m-%d %H:%M:%S"), link))
-        db.mydb.commit()
+async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link):
+    q = 'insert into notes (note_title, uid, sub_id, unit_id, datetime_of_creation, link) values(%s, %s, %s, %s, %s, %s)'
+    params = (title, uid, sub_id, unit_id, dt_of_creation, link)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    print('insert into notes values({}, {}, {}, {}, {}, {})'.format(title, uid, sub_id, unit_id, dt_of_creation, link))
