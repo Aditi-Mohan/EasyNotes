@@ -22,6 +22,7 @@ import global_vars as gv
 import os
 import asyncio
 from datetime import datetime
+import webbrowser
 
 class SubjectScreen(MDScreen):
     title = StringProperty()
@@ -121,6 +122,7 @@ class SubjectScreen(MDScreen):
         unit_name = self._popup.content.unit
         unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
         dt_of_creation = datetime.now()
+        link = ''
         async def write_file():
             link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
             await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link)
@@ -133,7 +135,8 @@ class SubjectScreen(MDScreen):
             item = TwoLineIconListItem(
                 text = file_name,
                 secondary_text = dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
-                # bg_color=[0,0,0,1]
+                # bg_color=[0,0,0,1],
+                on_release = self.open_note,
             )
             icon = IconLeftWidget(
                 icon="subdirectory-arrow-right",
@@ -210,7 +213,8 @@ class SubjectScreen(MDScreen):
                     item = TwoLineIconListItem(
                         text = i.note_title,
                         secondary_text = i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
-                        # bg_color=[0,0,0,1]
+                        # bg_color=[0,0,0,1],
+                        on_release = self.open_note,
                     )
                     icon = IconLeftWidget(
                         icon="subdirectory-arrow-right",
@@ -223,3 +227,15 @@ class SubjectScreen(MDScreen):
                 bxlay.add_widget(new_list)
                 self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
             self.notes_shown.append(unittile.text)
+    
+    def open_note(self, notetile):
+        bxlay = notetile.parent.parent
+        unittiles = [x for x in self.ids.list_view.children 
+                        if type(x) == type(OneLineIconListItem()) and x.text in self.notes_shown 
+                        and self.ids.list_view.children.index(x) > self.ids.list_view.children.index(bxlay)]
+        unit_name = unittiles[-1].text
+        print(unit_name)
+        note = [x for x in self.notes[unit_name] if x.note_title == notetile.text][0]
+        webbrowser.open(note.link)
+    
+    # def open_unit(self, unittile):
