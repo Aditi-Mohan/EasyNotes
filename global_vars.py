@@ -4,7 +4,7 @@ from models.units import Units
 import asyncio
 import dbconn as db
 from datetime import datetime
-from functions.write_transcript_to_notion import add_subpage_to_notion, add_unitpage_to_notion
+from functions.write_transcript_to_notion import add_subpage_to_notion, add_unitpage_to_notion, verify_token
 
 user = None
 subjects = []
@@ -44,6 +44,17 @@ async def get_notes_for(uid, sub_id, unit_id, unit_name, sub_name):
     else:
         notes[sub_name] = {unit_name: nt}
     print(notes)
+
+async def add_user(name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login):
+    token_valid = await verify_token(token)
+    if token_valid:
+        url_valid = await verify_homepage_url(homepage_url)
+        if url_valid:
+            # verify email
+            q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            params = (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login)
+            db.mycursor.execute(q, params)
+            db.mydb.commit()
 
 async def add_subject(name, uid, fac_name, color):
     link = await add_subpage_to_notion(name)
