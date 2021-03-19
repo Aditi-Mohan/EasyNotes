@@ -86,6 +86,7 @@ class SubjectScreen(MDScreen):
             self.new_unit = name
             asynckivy.start(gv.add_unit(self.new_unit, self.title, self.sub_id, gv.user.uid))
             asynckivy.start(gv.get_units_for(gv.user.uid, self.sub_id, self.title))
+            self.units = gv.units[self.title]
             item = OneLineIconListItem(
                 text= name,
                 on_release=self.show_notes,
@@ -129,13 +130,14 @@ class SubjectScreen(MDScreen):
         asynckivy.start(write_file())
         self._popup.dismiss()
         if unit_name in self.notes_shown:
-            unittiles = [x for x in self.ids.list_view.children if type(x) != type(BoxLayout())]
+            unittiles = [x for x in self.ids.list_view.children if type(x) == type(OneLineIconListItem())]
             unittile = [x for x in unittiles if x.text == unit_name][0]
-            bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
+            ind = self.ids.list_view.children.index(unittile) - 1
+
             item = TwoLineIconListItem(
                 text = file_name,
                 secondary_text = dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
-                # bg_color=[0,0,0,1],
+                bg_color=[40/255, 44/255, 64/255,1],
                 on_release = self.open_note,
             )
             icon = IconLeftWidget(
@@ -144,16 +146,24 @@ class SubjectScreen(MDScreen):
                 text_color=(self.color[0], self.color[1], self.color[2], 0.75),
             )
             item.add_widget(icon)
-            if type(bxlay) == type(OneLineListItem()):
-                self.ids.list_view.remove_widget(bxlay)
-                bxlay = BoxLayout(padding=[15,0,0,0])
-                new_list = MDList()
-                new_list.add_widget(item)
-                bxlay.add_widget(new_list)
-                self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+            if type(self.ids.list_view.children[ind]) == type(OneLineListItem()):
+                nt = self.ids.list_view.children[ind]
+                self.ids.list_view.remove_widget(nt)
+                self.ids.list_view.add_widget(item, ind)
             else:
-                bxlay.children[0].add_widget(item)
+                # nt = self.ids.list_view.children[ind+1]
+                self.ids.list_view.add_widget(item, ind)
+        #     if type(bxlay) == type(OneLineListItem()):
+        #         self.ids.list_view.remove_widget(bxlay)
+        #         bxlay = BoxLayout(padding=[15,0,0,0])
+        #         new_list = MDList()
+        #         new_list.add_widget(item)
+        #         bxlay.add_widget(new_list)
+        #         self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+        #     else:
+        #         bxlay.children[0].add_widget(item)
         asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit_id, unit_name, self.title))
+        self.notes[unit_name] = gv.notes[self.title][unit_name]
 
     def select_file(self, path, selection):
 
@@ -184,8 +194,15 @@ class SubjectScreen(MDScreen):
     
     def show_notes(self, unittile):
         if unittile.text in self.notes_shown:
-            bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
-            self.ids.list_view.remove_widget(bxlay)
+            # bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
+            ind = self.ids.list_view.children.index(unittile) - 1
+            while ind >= 1:
+                nt = self.ids.list_view.children[ind]
+                if type(nt) == type(OneLineIconListItem()):
+                    break
+                self.ids.list_view.remove_widget(nt)
+                ind -= 1
+            # self.ids.list_view.remove_widget(bxlay)
             self.notes_shown.remove(unittile.text)
         else:
             unit = [x for x in self.units if x.unit_name == unittile.text][0]
@@ -208,12 +225,13 @@ class SubjectScreen(MDScreen):
                     self.ids.list_view.children.index(unittile)
                 )
             else:
-                new_list = MDList()
+                # new_list = MDList()
+                ind = self.ids.list_view.children.index(unittile)
                 for i in self.notes[unit.unit_name]:
                     item = TwoLineIconListItem(
                         text = i.note_title,
                         secondary_text = i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
-                        # bg_color=[0,0,0,1],
+                        bg_color=[40/255, 44/255, 64/255,1],
                         on_release = self.open_note,
                     )
                     icon = IconLeftWidget(
@@ -222,17 +240,19 @@ class SubjectScreen(MDScreen):
                         text_color=(self.color[0], self.color[1], self.color[2], 0.75),
                     )
                     item.add_widget(icon)
-                    new_list.add_widget(item)
-                bxlay = BoxLayout(padding=[15,0,0,0])
-                bxlay.add_widget(new_list)
-                self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+                    self.ids.list_view.add_widget(item, ind)
+                    ind += 1
+                    # new_list.add_widget(item)
+                # bxlay = BoxLayout(padding=[15,0,0,0])
+                # bxlay.add_widget(new_list)
+                # self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
             self.notes_shown.append(unittile.text)
     
     def open_note(self, notetile):
-        bxlay = notetile.parent.parent
+        # bxlay = notetile.parent.parent
         unittiles = [x for x in self.ids.list_view.children 
                         if type(x) == type(OneLineIconListItem()) and x.text in self.notes_shown 
-                        and self.ids.list_view.children.index(x) > self.ids.list_view.children.index(bxlay)]
+                        and self.ids.list_view.children.index(x) > self.ids.list_view.children.index(notetile)]
         unit_name = unittiles[-1].text
         print(unit_name)
         note = [x for x in self.notes[unit_name] if x.note_title == notetile.text][0]
