@@ -32,6 +32,7 @@ async def get_units_for(uid, sub_id, sub_name):
     units[sub_name] = uts
 
 async def get_notes_for(uid, sub_id, unit_id, unit_name, sub_name):
+    print('select * from notes where uid={} and sub_id={} and unit_id={}'.format(uid, sub_id, unit_id))
     q = 'select * from notes where uid=%s and sub_id=%s and unit_id=%s'
     db.mycursor.execute(q, (uid, sub_id, unit_id))
     res = db.mycursor.fetchall()

@@ -1,7 +1,7 @@
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.list import MDList
 from kivy.properties import StringProperty, ColorProperty, ObjectProperty, NumericProperty
-from kivymd.uix.list import OneLineIconListItem, TwoLineIconListItem, IconLeftWidget, IconRightWidget
+from kivymd.uix.list import OneLineListItem, OneLineIconListItem, TwoLineIconListItem, IconLeftWidget, IconRightWidget
 from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
@@ -27,6 +27,7 @@ class SubjectScreen(MDScreen):
     title = StringProperty()
     color = ColorProperty()
     btn_color = ColorProperty()
+    unit_nos = StringProperty()
     sub_id = NumericProperty()
     # notes = [{'title': 'LESSON 1', 'time': datetime.now().strftime(r"%m/%d/%Y, %H:%M:%S")},
     #         {'title': 'LESSON 2', 'time': datetime.now().strftime(r"%m/%d/%Y, %H:%M:%S")},
@@ -38,16 +39,19 @@ class SubjectScreen(MDScreen):
     file_type = ''
     notes = {}
     new_unit = None
+    notes_shown = []
     
     def on_pre_enter(self, *args):
         self.btn_color = (self.color[0], self.color[1], self.color[2], 0.4)
         list_view = self.ids.list_view
+        self.notes_shown = []
         if self.title in gv.units.keys():
             self.units = gv.units[self.title]
         else:
             print('loading...')
             asynckivy.start(gv.get_units_for(gv.user.uid, self.sub_id, self.title))
             self.units = gv.units[self.title]
+        self.unit_nos = str(len(self.units))
         for i in self.units:
             item = OneLineIconListItem(
                 text= i.unit_name,
@@ -92,6 +96,7 @@ class SubjectScreen(MDScreen):
             )
             item.add_widget(icon)
             self.ids.list_view.add_widget(item, 1)
+            self.unit_nos = str(int(self.unit_nos) + 1)
             self._popup.dismiss()
         content = AddUnitDialog(add_unit=add_unit_callback)
         self._popup = Popup(title='Add Unit', content=content, size_hint=(0.9, 0.9))
@@ -115,24 +120,37 @@ class SubjectScreen(MDScreen):
         file_name = self._popup.content.file_name
         unit_name = self._popup.content.unit
         unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
-        dt_of_creation = datetime.now().strftime(r"%m/%d/%Y, %H:%M:%S")
+        dt_of_creation = datetime.now()
         async def write_file():
-            link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation)
-            print('calling func')
-            await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation, link)
+            link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
+            await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link)
         asynckivy.start(write_file())
         self._popup.dismiss()
-        # item = TwoLineIconListItem(
-        #     text= file_name,
-        #     secondary_text= dt_of_creation,
-        # )
-        # icon = IconLeftWidget(
-        #     icon="note",
-        #     theme_text_color="Custom",
-        #     text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-        # )
-        # item.add_widget(icon)
-        # self.ids.list_view.add_widget(item)
+        if unit_name in self.notes_shown:
+            unittiles = [x for x in self.ids.list_view.children if type(x) != type(BoxLayout())]
+            unittile = [x for x in unittiles if x.text == unit_name][0]
+            bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
+            item = TwoLineIconListItem(
+                text = file_name,
+                secondary_text = dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
+                # bg_color=[0,0,0,1]
+            )
+            icon = IconLeftWidget(
+                icon="subdirectory-arrow-right",
+                theme_text_color="Custom",
+                text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+            )
+            item.add_widget(icon)
+            if type(bxlay) == type(OneLineListItem()):
+                self.ids.list_view.remove_widget(bxlay)
+                bxlay = BoxLayout(padding=[15,0,0,0])
+                new_list = MDList()
+                new_list.add_widget(item)
+                bxlay.add_widget(new_list)
+                self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+            else:
+                bxlay.children[0].add_widget(item)
+        asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit_id, unit_name, self.title))
 
     def select_file(self, path, selection):
 
@@ -162,28 +180,46 @@ class SubjectScreen(MDScreen):
         self._popup.open()
     
     def show_notes(self, unittile):
-        unit = [x for x in self.units if x.unit_name == unittile.text][0]
-        if self.title in gv.notes.keys():
-            if unit.unit_name in gv.notes[self.title].keys():
-                self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
-            else:
-                asynckivy.start(gv.get_notes_for(gv.user.uid, self.title, unit.unit_id, unit.unit_name, self.title))
-                self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+        if unittile.text in self.notes_shown:
+            bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
+            self.ids.list_view.remove_widget(bxlay)
+            self.notes_shown.remove(unittile.text)
         else:
-            asynckivy.start(gv.get_notes_for(gv.user.uid, self.title, unit.unit_id, unit.unit_name, self.title))
-            self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
-        new_list = MDList()
-        for i in self.notes[unit.unit_name]:
-            item = OneLineIconListItem(
-                text= i.note_title,
-            )
-            icon = IconLeftWidget(
-                icon="subdirectory-arrow-right",
-                theme_text_color="Custom",
-                text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-            )
-            item.add_widget(icon)
-            new_list.add_widget(item)
-        bxlay = BoxLayout()
-        bxlay.add_widget(new_list)
-        self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+            unit = [x for x in self.units if x.unit_name == unittile.text][0]
+            if self.title in gv.notes.keys():
+                if unit.unit_name in gv.notes[self.title].keys():
+                    self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+                else:
+                    asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit.unit_id, unit.unit_name, self.title))
+                    self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+            else:
+                asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit.unit_id, unit.unit_name, self.title))
+                self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+            if len(self.notes[unit.unit_name]) == 0:
+                self.ids.list_view.add_widget(
+                    OneLineListItem(
+                        text='No Notes For '+unittile.text,
+                        theme_text_color='Custom',
+                        text_color=[158/255, 160/255, 163/255, 1]
+                    ),
+                    self.ids.list_view.children.index(unittile)
+                )
+            else:
+                new_list = MDList()
+                for i in self.notes[unit.unit_name]:
+                    item = TwoLineIconListItem(
+                        text = i.note_title,
+                        secondary_text = i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
+                        # bg_color=[0,0,0,1]
+                    )
+                    icon = IconLeftWidget(
+                        icon="subdirectory-arrow-right",
+                        theme_text_color="Custom",
+                        text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+                    )
+                    item.add_widget(icon)
+                    new_list.add_widget(item)
+                bxlay = BoxLayout(padding=[15,0,0,0])
+                bxlay.add_widget(new_list)
+                self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+            self.notes_shown.append(unittile.text)

@@ -32,7 +32,7 @@ async def write_transcript(title, transcript, token_v2, url, sub_name, unit_name
     new_page.children.add_new(DividerBlock)
     for each in transcript:
         text_block = new_page.children.add_new(TextBlock, title=each)
-    return unit_page.get_browseable_url()
+    return new_page.get_browseable_url()
     
 
 async def add_subpage_to_notion(subname):
