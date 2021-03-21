@@ -13,6 +13,7 @@ from libs.baseclass.root_screen import RallyRootScreen
 from libs.baseclass.add_unit_dialog import AddUnitDialog
 from libs.baseclass.file_chooser import ChooseFile
 from libs.baseclass.save_file_dialog import SaveFile
+from libs.baseclass.bookmark import Bookmark
 from functions.ibmspeechtotext import generate_transcript
 from functions.write_transcript_to_notion import write_transcript
 from functions.audio_from_video import audio_from_video
@@ -124,52 +125,53 @@ class SubjectScreen(MDScreen):
         unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
         dt_of_creation = datetime.now()
         link = ''
+        num_of_bookmarks = 0
         async def write_file():
             link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
             await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link)
-        asynckivy.start(write_file())
+        # asynckivy.start(write_file())
         self._popup.dismiss()
-        if unit_name in self.notes_shown:
-            unittiles = [x for x in self.ids.list_view.children if type(x) == type(OneLineIconListItem())]
-            unittile = [x for x in unittiles if x.text == unit_name][0]
-            ind = self.ids.list_view.children.index(unittile) - 1
+        content = Bookmark(file_type=self.file_type)
+        self._popup = Popup(title='Add Bookmarks', content=content, size_hint=(1, 1))
+        self._popup.open()
+        # if unit_name in self.notes_shown:
+        #     unittiles = [x for x in self.ids.list_view.children if type(x) == type(OneLineIconListItem())]
+        #     unittile = [x for x in unittiles if x.text == unit_name][0]
+        #     ind = self.ids.list_view.children.index(unittile) - 1
 
-            item = TwoLineIconListItem(
-                text = file_name,
-                secondary_text = dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
-                bg_color=[40/255, 44/255, 64/255,1],
-                on_release = self.open_note,
-            )
-            icon = IconLeftWidget(
-                icon="subdirectory-arrow-right",
-                theme_text_color="Custom",
-                text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-            )
-            item.add_widget(icon)
-            if type(self.ids.list_view.children[ind]) == type(OneLineListItem()):
-                nt = self.ids.list_view.children[ind]
-                self.ids.list_view.remove_widget(nt)
-                self.ids.list_view.add_widget(item, ind)
-            else:
-                # nt = self.ids.list_view.children[ind+1]
-                self.ids.list_view.add_widget(item, ind)
-        #     if type(bxlay) == type(OneLineListItem()):
-        #         self.ids.list_view.remove_widget(bxlay)
-        #         bxlay = BoxLayout(padding=[15,0,0,0])
-        #         new_list = MDList()
-        #         new_list.add_widget(item)
-        #         bxlay.add_widget(new_list)
-        #         self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+        #     item = TwoLineIconListItem(
+        #         text = file_name,
+        #         secondary_text = 'On '+dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+'    '+str(num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
+        #         bg_color=[40/255, 44/255, 64/255,1],
+        #         on_release = self.open_note,
+        #     )
+        #     icon = IconLeftWidget(
+        #         icon="subdirectory-arrow-right",
+        #         theme_text_color="Custom",
+        #         text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+        #     )
+        #     item.add_widget(icon)
+        #     if type(self.ids.list_view.children[ind]) == type(OneLineListItem()):
+        #         nt = self.ids.list_view.children[ind]
+        #         self.ids.list_view.remove_widget(nt)
+        #         self.ids.list_view.add_widget(item, ind)
         #     else:
-        #         bxlay.children[0].add_widget(item)
-        asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit_id, unit_name, self.title))
-        self.notes[unit_name] = gv.notes[self.title][unit_name]
+        #         # nt = self.ids.list_view.children[ind+1]
+        #         self.ids.list_view.add_widget(item, ind)
+        # #     if type(bxlay) == type(OneLineListItem()):
+        # #         self.ids.list_view.remove_widget(bxlay)
+        # #         bxlay = BoxLayout(padding=[15,0,0,0])
+        # #         new_list = MDList()
+        # #         new_list.add_widget(item)
+        # #         bxlay.add_widget(new_list)
+        # #         self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+        # #     else:
+        # #         bxlay.children[0].add_widget(item)
+        # asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit_id, unit_name, self.title))
+        # self.notes[unit_name] = gv.notes[self.title][unit_name]
 
     def select_file(self, path, selection):
 
-        content = ProgressBar()
-        self._popup._popup = Popup(title='Processing', content=content, size_hint=(0.5,0.6))
-        self._popup._popup.open()
         print('selected file: ')
         print(path)
         print(selection)
@@ -189,7 +191,7 @@ class SubjectScreen(MDScreen):
         self._popup.dismiss()
         
         content = SaveFile(cancel=self.dismiss_popup, save=self.save, options=[x.unit_name for x in self.units])
-        self._popup = Popup(title='Save File', content=content, size_hint=(0.9,0.9))
+        self._popup = Popup(title='Save File', content=content, size_hint=(0.8,0.5))
         self._popup.open()
     
     def show_notes(self, unittile):
@@ -230,7 +232,7 @@ class SubjectScreen(MDScreen):
                 for i in self.notes[unit.unit_name]:
                     item = TwoLineIconListItem(
                         text = i.note_title,
-                        secondary_text = i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"),
+                        secondary_text = 'On '+i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+"    "+str(i.num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
                         bg_color=[40/255, 44/255, 64/255,1],
                         on_release = self.open_note,
                     )
