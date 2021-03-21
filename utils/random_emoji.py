@@ -1,6 +1,6 @@
 import random
 
-    emojis=['😀',
+emojis=['😀',
     '😃',
     '😄',
     '😁',
@@ -783,3 +783,5 @@ import random
 def random_icon():
     emoji = random.choice(emojis)
     return emoji
+
+bookmark_emoji = '📑'

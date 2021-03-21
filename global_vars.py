@@ -71,7 +71,7 @@ async def add_unit(name, sub_name, sub_id, uid):
     db.mydb.commit()
 
 async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_bookmarks):
-    q = 'insert into notes (note_title, uid, sub_id, unit_id, datetime_of_creation, link, num_of_bookmarks) values(%s, %s, %s, %s, %s, %s)'
+    q = 'insert into notes (note_title, uid, sub_id, unit_id, datetime_of_creation, link, num_of_bookmarks) values(%s, %s, %s, %s, %s, %s, %s)'
     params = (title, uid, sub_id, unit_id, dt_of_creation, link, num_of_bookmarks)
     db.mycursor.execute(q, params)
     db.mydb.commit()

@@ -8,6 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivymd.utils import asynckivy
 from kivy.core.audio import SoundLoader
+from kivy.uix.videoplayer import VideoPlayer
 
 from libs.baseclass.root_screen import RallyRootScreen
 from libs.baseclass.add_unit_dialog import AddUnitDialog
@@ -15,7 +16,7 @@ from libs.baseclass.file_chooser import ChooseFile
 from libs.baseclass.save_file_dialog import SaveFile
 from libs.baseclass.bookmark import Bookmark
 from functions.ibmspeechtotext import generate_transcript
-from functions.write_transcript_to_notion import write_transcript
+from functions.write_transcript_to_notion import write_transcript, write_transcript_with_bookmarks
 from functions.audio_from_video import audio_from_video
 import utils.file_extensions as fe
 import global_vars as gv
@@ -24,6 +25,7 @@ import os
 import asyncio
 from datetime import datetime
 import webbrowser
+import cv2
 
 class SubjectScreen(MDScreen):
     title = StringProperty()
@@ -118,56 +120,46 @@ class SubjectScreen(MDScreen):
     
     def dismiss_popup(self):
         self._popup.dismiss()
+    
+    def get_transcript_with_bookmarks(self, transcript, bookmark_indexes):
+        self.new_transcript = transcript
 
-    def save(self):
-        file_name = self._popup.content.file_name
-        unit_name = self._popup.content.unit
-        unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
-        dt_of_creation = datetime.now()
+    def update_ui(self, file_name, unit_name, dt_of_creation, num_of_bookmarks):
+        if unit_name in self.notes_shown:
+            unittiles = [x for x in self.ids.list_view.children if type(x) == type(OneLineIconListItem())]
+            unittile = [x for x in unittiles if x.text == unit_name][0]
+            ind = self.ids.list_view.children.index(unittile) - 1
 
-        async def write_file():
-            link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
-            await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link)
-        # asynckivy.start(write_file())
-        self._popup.dismiss()
-        content = Bookmark(file_type=self.file_type)
-        self._popup = Popup(title='Add Bookmarks', content=content, size_hint=(1, 1))
-        self._popup.open()
-        # if unit_name in self.notes_shown:
-        #     unittiles = [x for x in self.ids.list_view.children if type(x) == type(OneLineIconListItem())]
-        #     unittile = [x for x in unittiles if x.text == unit_name][0]
-        #     ind = self.ids.list_view.children.index(unittile) - 1
-
-        #     item = TwoLineIconListItem(
-        #         text = file_name,
-        #         secondary_text = 'On '+dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+'    '+str(num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
-        #         bg_color=[40/255, 44/255, 64/255,1],
-        #         on_release = self.open_note,
-        #     )
-        #     icon = IconLeftWidget(
-        #         icon="subdirectory-arrow-right",
-        #         theme_text_color="Custom",
-        #         text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-        #     )
-        #     item.add_widget(icon)
-        #     if type(self.ids.list_view.children[ind]) == type(OneLineListItem()):
-        #         nt = self.ids.list_view.children[ind]
-        #         self.ids.list_view.remove_widget(nt)
-        #         self.ids.list_view.add_widget(item, ind)
+            item = TwoLineIconListItem(
+                text = file_name,
+                secondary_text = 'On '+dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+'    '+str(num_of_bookmarks)+(' bookmarks' if num_of_bookmarks>1 else ' bookmark'),
+                bg_color=[40/255, 44/255, 64/255,1],
+                on_release = self.open_note,
+            )
+            icon = IconLeftWidget(
+                icon="subdirectory-arrow-right",
+                theme_text_color="Custom",
+                text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+            )
+            item.add_widget(icon)
+            if type(self.ids.list_view.children[ind]) == type(OneLineListItem()):
+                nt = self.ids.list_view.children[ind]
+                self.ids.list_view.remove_widget(nt)
+                self.ids.list_view.add_widget(item, ind)
+            else:
+                # nt = self.ids.list_view.children[ind+1]
+                self.ids.list_view.add_widget(item, ind)
+        #     if type(bxlay) == type(OneLineListItem()):
+        #         self.ids.list_view.remove_widget(bxlay)
+        #         bxlay = BoxLayout(padding=[15,0,0,0])
+        #         new_list = MDList()
+        #         new_list.add_widget(item)
+        #         bxlay.add_widget(new_list)
+        #         self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
         #     else:
-        #         # nt = self.ids.list_view.children[ind+1]
-        #         self.ids.list_view.add_widget(item, ind)
-        # #     if type(bxlay) == type(OneLineListItem()):
-        # #         self.ids.list_view.remove_widget(bxlay)
-        # #         bxlay = BoxLayout(padding=[15,0,0,0])
-        # #         new_list = MDList()
-        # #         new_list.add_widget(item)
-        # #         bxlay.add_widget(new_list)
-        # #         self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
-        # #     else:
-        # #         bxlay.children[0].add_widget(item)
-        # asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit_id, unit_name, self.title))
-        # self.notes[unit_name] = gv.notes[self.title][unit_name]
+        #         bxlay.children[0].add_widget(item)
+        asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit_id, unit_name, self.title))
+        self.notes[unit_name] = gv.notes[self.title][unit_name]
 
     def select_file(self, path, selection):
         print('selected file: ')
@@ -187,20 +179,40 @@ class SubjectScreen(MDScreen):
             dt_of_creation = datetime.now()
             self._popup.dismiss()
             print(file_name, unit_name, unit_id, dt_of_creation)
-            # asynckivy.start(process_file())
-            # asynckivy.start(write_file())
+            asynckivy.start(process_file())
+            asynckivy.start(write_file())
+            self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks)
         
         def add_bookmarks():
             file_name = self._popup.content.file_name
             unit_name = self._popup.content.unit
             unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
             dt_of_creation = datetime.now()
-            directory = str(file_name).replace(' ', '_')
-            direc = os.path.join(path, directory)
-            os.mkdir(direc)
-            sound = SoundLoader.load(selection[0])
+
+            async def write_file_with_bm(transcript, num_of_bookmarks):
+                self._popup.dismiss()
+                print(self.ids.fl.children)
+                link = await write_transcript_with_bookmarks(file_name, transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
+                num_of_bookmarks = num_of_bookmarks
+                await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
+                self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks)
+
+            sound = None
+            audio_file = None
+            video_file = None
+            vid = None
+            vicdcap = None
+            if self.file_type == 'video':
+                video_file = selection[0]
+                audio_file = audio_from_video(selection[0])
+                sound = SoundLoader.load(audio_file)
+                vid = VideoPlayer(source=video_file, state='pause')
+                vidcap = cv2.VideoCapture(video_file)
+            else:
+                audio_file = selection[0]
+                sound = SoundLoader.load(selection[0])
             self._popup.dismiss()
-            content = Bookmark(file_type=self.file_type, sound=sound, temp_folder=direc, audio_file=selection[0])
+            content = Bookmark(file_type=self.file_type, sound=sound, vid=vid, vidcap=vidcap, audio_file=audio_file, video_file=video_file, finish_up=write_file_with_bm)
             self._popup = Popup(title='Add Bookmarks', content=content, size_hint=(1, 1))
             self._popup.open()
         

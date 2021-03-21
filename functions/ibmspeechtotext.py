@@ -6,7 +6,7 @@ api_key = IAMAuthenticator("acyFMIII31gP3u8wJKIwnDAS6mx5NMiUV698g9VFsodj")
 speech_2_text = SpeechToTextV1(authenticator=api_key)
 speech_2_text.set_service_url("https://api.jp-tok.speech-to-text.watson.cloud.ibm.com/instances/f8ab0ba3-dcfd-427f-8506-d3822ca14d21")
 
-def print_text(audio):
+async def print_text(audio):
     result = speech_2_text.recognize(
         audio = audio,
         content_type = "audio/wav"
@@ -21,7 +21,7 @@ def print_text(audio):
             imax = confs.index(max(confs))
         res = alts[imax]['transcript']
         text += [res[:len(res)-1]+"."]
-    print(text)
+    return text
 
 def generate_transcript(audio_file_path):
     with open(audio_file_path, "rb") as audio_file:

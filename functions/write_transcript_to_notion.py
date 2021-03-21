@@ -1,6 +1,7 @@
 from notion.client import NotionClient
 from notion.block import *
 from datetime import datetime
+from utils.random_emoji import bookmark_emoji
 
 # def get_user_token():
 #     # replace with fetching token for that user from database
@@ -53,6 +54,25 @@ async def write_transcript(title, transcript, token_v2, url, sub_name, unit_name
     new_page.children.add_new(DividerBlock)
     for each in transcript:
         text_block = new_page.children.add_new(TextBlock, title=each)
+    return new_page.get_browseable_url()
+
+async def write_transcript_with_bookmarks(title, transcript, token_v2, url, sub_name, unit_name, dt_of_creation):
+    client = NotionClient(token_v2=token_v2)
+    homepage = client.get_block(url)
+    sub_page = get_doc(homepage, sub_name)
+    unit_page = get_doc(sub_page, unit_name)
+    new_page = unit_page.children.add_new(PageBlock, title=title)
+    now = datetime.now()
+    date_block = new_page.children.add_new(TextBlock, title="Created on: "+dt_of_creation)
+    date_block.set("format.block_color", "blue_background")
+    transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
+    new_page.children.add_new(DividerBlock)
+    for each, is_bm in transcript:
+        if is_bm == 0:
+            text_block = new_page.children.add_new(TextBlock, title=each[0])
+        else:
+            callout_block = new_page.children.add_new(CalloutBlock, title=each[0], icon=bookmark_emoji)
+            callout_block.set("format.block_color", "red_background")
     return new_page.get_browseable_url()
     
 

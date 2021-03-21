@@ -4,23 +4,32 @@ from kivy.uix.label import Label
 from kivy.uix.progressbar import ProgressBar
 from kivy.properties import StringProperty, ObjectProperty
 from kivy.core.audio import SoundLoader
+from kivymd.utils import asynckivy
+from kivy.uix.videoplayer import VideoPlayer
 
 from kivymd.uix.button import MDIconButton, MDFillRoundFlatButton
+from kivymd.uix.list import MDList,TwoLineIconListItem, IconLeftWidget
+from kivy.uix.scrollview import ScrollView
 
 from functions.ibmspeechtotext import print_text
 
 from pydub import AudioSegment
 import io
 import re
+import cv2
 
 class Bookmark(BoxLayout):
     file_type = StringProperty()
     playing = False
     sound = ObjectProperty()
-    temp_folder = StringProperty()
+    vid = ObjectProperty()
+    vidcap = ObjectProperty()
     audio_file = StringProperty()
+    video_file = StringProperty()
+    finish_up = ObjectProperty()
     forward_backward_color = (1, 1, 1, 1)
     bookmarks = []
+    frames = []
     start_enable = True
     stop_enable = False
     
@@ -96,29 +105,35 @@ class Bookmark(BoxLayout):
             self.start_enable = True
             self.stop_enable = False
     
-    def split_audio(self, btn):
+    def done(self, btn):
+        asynckivy.start(self.split_audio())
+
+    async def split_audio(self):
         if len(self.bookmarks) > 0:
             i = 0
             sections = []
             for a, b in self.bookmarks:
                 if i != a:
-                    sections.append([i, a])
-                    sections.append([a, b])
+                    sections.append([i, a, 0])
+                    sections.append([a, b, 1])
                     i = b
                 else:
-                    sections.append([a, b])
+                    sections.append([a, b, 1])
                     i = b
             if i != self.sound.length:
-                sections.append([i, self.sound.length])
+                sections.append([i, self.sound.length, 0])
             transcript = []
-            for start, stop in sections:
+            for start, stop, is_bm in sections:
                 start = start * 1000 #Works in milliseconds
                 stop = stop * 1000
                 newAudio = AudioSegment.from_wav(self.audio_file)
                 newAudio = newAudio[start:stop]
                 buf = io.BytesIO()
                 newAudio.export(buf, format='wav')
-                print_text(buf.getvalue())
+                text = await print_text(buf.getvalue())
+                transcript.append([text, is_bm])
+            print(transcript)
+            asynckivy.start(self.finish_up(transcript, len(self.bookmarks)))
                 # newAudio.export('newSong.wav', format="wav")
 
     def audio_bookmark_content(self):
@@ -162,10 +177,12 @@ class Bookmark(BoxLayout):
         )
         done = MDFillRoundFlatButton(
             text='DONE',
-            on_release= self.split_audio,
+            on_release= self.done,
         )
+        list_of_bookmarks = MDList()
         bx2.add_widget(start)
         bx2.add_widget(stop)
+        bx2.add_widget(list_of_bookmarks)
         bx2.add_widget(done)
 
         bx1.add_widget(bx2)
@@ -173,12 +190,95 @@ class Bookmark(BoxLayout):
         bx.add_widget(control_panel)
         return bx
     
-    def video_bookmark_content(self):
-        return Label(text='Video Bookmark')
-            
+    def remove_bookmark(self, elm, x):
+        print(ind)
+        print(self.frames)
+        self.frames.remove(elm)
+        lst = self.children[0].current_tab.content.children[1].children[0].children[0]
+        lst.remove_widget(x)
+    
+    def capture_frame(self, btn):
+        pos = self.vid.position
+        fps = self.vidcap.get(cv2.CAP_PROP_FPS)
+        ind = round(pos*fps)
+        if len(self.frames) > 0:
+            if ind not in self.frames[:][0]:
+                print(ind)
+                elm = [ind, pos]
+                self.frames.append(elm)
+                lst = self.children[0].current_tab.content.children[1].children[0].children[0]
+                item = TwoLineIconListItem(
+                    text='Bookmark at '+str(pos)+' seconds',
+                    secondary_text = 'Click to remove',
+                    on_release=lambda x: self.remove_bookmark(elm, x),
+                )
+                icon = IconLeftWidget(
+                    icon = 'bookmark-remove'
+                )
+                item.add_widget(icon)
+                lst.add_widget(item)
+        else:
+            elm = [ind, pos]
+            self.frames.append(elm)
+            lst = self.children[0].current_tab.content.children[1].children[0].children[0]
+            item = TwoLineIconListItem(
+                text='Bookmark at '+str(pos)+' seconds',
+                secondary_text = 'Click to remove',
+                on_release=lambda x: self.remove_bookmark(elm, x),
+            )
+            icon = IconLeftWidget(
+                icon = 'bookmark-remove'
+            )
+            item.add_widget(icon)
+            lst.add_widget(item)
+    
+    
+    def get_frames(self, btn):
         
-        # TabbedPanelItem:
-        #     id: video
-        #     text: 'video tab'
-        #     background_color: root.video_color
-        #     content: root.video_bookmark_content()
+        cap = self.vidcap
+
+        # get total number of frames
+        totalFrames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        frame_img = []
+        for ind, pos in self.frames:
+
+            # check for valid frame number
+            if ind >= 0 & ind <= totalFrames:
+                # set frame position
+                cap.set(cv2.CAP_PROP_POS_FRAMES,ind)
+                ret, frame = cap.read()
+                frame_img.append(frame)
+                # cv2.imwrite("frame"+str(count)+".jpg", frame)
+                # cv2.imshow("Frame", frame)
+        # print(frame_img)
+        #     if cv2.waitKey(20) & 0xFF == ord('q'):
+        #         break
+
+        # cv2.destroyAllWindows()
+
+    def video_bookmark_content(self):
+                
+        bx1 = BoxLayout(orientation='horizontal', size_hint=(1, 0.9))
+        control_panel = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), spacing=50)
+        bx = BoxLayout(orientation='vertical', size_hint=(1, 0.9))
+        capture = MDFillRoundFlatButton(
+            text = 'Capture Frame',
+            on_release= self.capture_frame,
+        )
+        done = MDFillRoundFlatButton(
+            text = 'Complete with Audio Bookmarks',
+            on_release= self.get_frames,
+        )
+        self.vid.keep_ratio = True
+        self.vid.size_hint = (0.7, 0.8)
+        scrvw = ScrollView(size_hint=(0.3, 1))
+        list_of_bookmarks = MDList()
+        list_of_bookmarks.add_widget(TwoLineIconListItem(text='hi there'))
+        scrvw.add_widget(list_of_bookmarks)
+        bx1.add_widget(self.vid)
+        bx1.add_widget(scrvw)
+        bx.add_widget(bx1)
+        control_panel.add_widget(capture)
+        control_panel.add_widget(done)
+        bx.add_widget(control_panel)
+        return bx
