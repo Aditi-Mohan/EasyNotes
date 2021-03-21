@@ -6,8 +6,8 @@ from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
-from kivy.uix.progressbar import ProgressBar
 from kivymd.utils import asynckivy
+from kivy.core.audio import SoundLoader
 
 from libs.baseclass.root_screen import RallyRootScreen
 from libs.baseclass.add_unit_dialog import AddUnitDialog
@@ -124,8 +124,7 @@ class SubjectScreen(MDScreen):
         unit_name = self._popup.content.unit
         unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
         dt_of_creation = datetime.now()
-        link = ''
-        num_of_bookmarks = 0
+
         async def write_file():
             link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
             await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link)
@@ -171,10 +170,43 @@ class SubjectScreen(MDScreen):
         # self.notes[unit_name] = gv.notes[self.title][unit_name]
 
     def select_file(self, path, selection):
-
         print('selected file: ')
         print(path)
         print(selection)
+        file_name = None
+        unit_name = None
+        unit_id = None
+        dt_of_creation = None
+        link = ''
+        num_of_bookmarks = 0
+
+        def finish():
+            file_name = self._popup.content.file_name
+            unit_name = self._popup.content.unit
+            unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
+            dt_of_creation = datetime.now()
+            self._popup.dismiss()
+            print(file_name, unit_name, unit_id, dt_of_creation)
+            # asynckivy.start(process_file())
+            # asynckivy.start(write_file())
+        
+        def add_bookmarks():
+            file_name = self._popup.content.file_name
+            unit_name = self._popup.content.unit
+            unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
+            dt_of_creation = datetime.now()
+            directory = str(file_name).replace(' ', '_')
+            direc = os.path.join(path, directory)
+            os.mkdir(direc)
+            sound = SoundLoader.load(selection[0])
+            self._popup.dismiss()
+            content = Bookmark(file_type=self.file_type, sound=sound, temp_folder=direc, audio_file=selection[0])
+            self._popup = Popup(title='Add Bookmarks', content=content, size_hint=(1, 1))
+            self._popup.open()
+        
+        async def write_file():
+            link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
+            await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
 
         async def process_file():
             if(self.file_type == 'audio'):
@@ -186,11 +218,11 @@ class SubjectScreen(MDScreen):
                     audio_file = audio_from_video(i)
                     block = generate_transcript(audio_file)
                     self.new_transcript = [*self.new_transcript, *block]
-        asynckivy.start(process_file())
+        # asynckivy.start(process_file())
 
         self._popup.dismiss()
         
-        content = SaveFile(cancel=self.dismiss_popup, save=self.save, options=[x.unit_name for x in self.units])
+        content = SaveFile(finish=finish, go_to_bookmark=add_bookmarks, options=[x.unit_name for x in self.units])
         self._popup = Popup(title='Save File', content=content, size_hint=(0.8,0.5))
         self._popup.open()
     
