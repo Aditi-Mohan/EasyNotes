@@ -2,6 +2,7 @@ from notion.client import NotionClient
 from notion.block import *
 from datetime import datetime
 from utils.random_emoji import bookmark_emoji
+from utils.random_color import random_color
 
 # def get_user_token():
 #     # replace with fetching token for that user from database
@@ -47,7 +48,6 @@ async def write_transcript(title, transcript, token_v2, url, sub_name, unit_name
     sub_page = get_doc(homepage, sub_name)
     unit_page = get_doc(sub_page, unit_name)
     new_page = unit_page.children.add_new(PageBlock, title=title)
-    now = datetime.now()
     date_block = new_page.children.add_new(TextBlock, title="Created on: "+dt_of_creation)
     date_block.set("format.block_color", "blue_background")
     transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
@@ -62,7 +62,6 @@ async def write_transcript_with_bookmarks(title, transcript, token_v2, url, sub_
     sub_page = get_doc(homepage, sub_name)
     unit_page = get_doc(sub_page, unit_name)
     new_page = unit_page.children.add_new(PageBlock, title=title)
-    now = datetime.now()
     date_block = new_page.children.add_new(TextBlock, title="Created on: "+dt_of_creation)
     date_block.set("format.block_color", "blue_background")
     transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
@@ -72,9 +71,37 @@ async def write_transcript_with_bookmarks(title, transcript, token_v2, url, sub_
             text_block = new_page.children.add_new(TextBlock, title=each[0])
         else:
             callout_block = new_page.children.add_new(CalloutBlock, title=each[0], icon=bookmark_emoji)
-            callout_block.set("format.block_color", "red_background")
+            callout_block.set("format.block_color", random_color()+"_background")
     return new_page.get_browseable_url()
     
+async def write_transcript_with_frames_and_bookmarks(title, frames, transcript, token_v2, url, sub_name, unit_name, dt_of_creation):
+    client = NotionClient(token_v2=token_v2)
+    homepage = client.get_block(url)
+    sub_page = get_doc(homepage, sub_name)
+    unit_page = get_doc(sub_page, unit_name)
+    new_page = unit_page.children.add_new(PageBlock, title=title)
+    date_block = new_page.children.add_new(TextBlock, title="Created on: "+dt_of_creation)
+    date_block.set("format.block_color", "blue_background")
+    transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
+    new_page.children.add_new(DividerBlock)
+    for each, is_bm in transcript:
+        if is_bm == 0:
+            text_block = new_page.children.add_new(TextBlock, title=each[0])
+        else:
+            callout_block = new_page.children.add_new(CalloutBlock, title=each[0], icon=bookmark_emoji)
+            callout_block.set("format.block_color", random_color()+"_background")
+    if len(frames) > 0:
+        new_page.children.add_new(TextBlock, title='')
+        new_page.children.add_new(TextBlock, title='')
+        new_page.children.add_new(TextBlock, title='')
+        new_page.children.add_new(SubheaderBlock, title='Video Bookmarks')
+        new_page.children.add_new(DividerBlock)
+        for each in frames:
+            img = new_page.children.add_new(ImageBlock, width=500)
+            img.upload_file(each)
+            # print(img.source)
+            # print(img.file_id)
+    return new_page.get_browseable_url()
 
 async def add_subpage_to_notion(subname):
     token_v2 = get_user_token()

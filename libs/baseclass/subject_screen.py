@@ -16,7 +16,7 @@ from libs.baseclass.file_chooser import ChooseFile
 from libs.baseclass.save_file_dialog import SaveFile
 from libs.baseclass.bookmark import Bookmark
 from functions.ibmspeechtotext import generate_transcript
-from functions.write_transcript_to_notion import write_transcript, write_transcript_with_bookmarks
+from functions.write_transcript_to_notion import write_transcript, write_transcript_with_bookmarks, write_transcript_with_frames_and_bookmarks
 from functions.audio_from_video import audio_from_video
 import utils.file_extensions as fe
 import global_vars as gv
@@ -124,7 +124,7 @@ class SubjectScreen(MDScreen):
     def get_transcript_with_bookmarks(self, transcript, bookmark_indexes):
         self.new_transcript = transcript
 
-    def update_ui(self, file_name, unit_name, dt_of_creation, num_of_bookmarks):
+    def update_ui(self, file_name, unit_name, dt_of_creation, num_of_bookmarks, unit_id):
         if unit_name in self.notes_shown:
             unittiles = [x for x in self.ids.list_view.children if type(x) == type(OneLineIconListItem())]
             unittile = [x for x in unittiles if x.text == unit_name][0]
@@ -181,7 +181,7 @@ class SubjectScreen(MDScreen):
             print(file_name, unit_name, unit_id, dt_of_creation)
             asynckivy.start(process_file())
             asynckivy.start(write_file())
-            self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks)
+            self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks, unit_id)
         
         def add_bookmarks():
             file_name = self._popup.content.file_name
@@ -191,28 +191,46 @@ class SubjectScreen(MDScreen):
 
             async def write_file_with_bm(transcript, num_of_bookmarks):
                 self._popup.dismiss()
-                print(self.ids.fl.children)
+                # print(self.ids.fl.children)
                 link = await write_transcript_with_bookmarks(file_name, transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
                 num_of_bookmarks = num_of_bookmarks
                 await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
                 self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks)
+
+            async def write_file_with_bm_and_frames(frames, transcript, num_of_bookmarks):
+                self._popup.dismiss()
+                # print(self.ids.fl.children)
+                link = await write_transcript_with_frames_and_bookmarks(file_name, frames, transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
+                num_of_bookmarks = num_of_bookmarks
+                await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
+                print(temp_folder)
+                os.remove(temp_folder)
+                self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks, unit_id)
 
             sound = None
             audio_file = None
             video_file = None
             vid = None
             vicdcap = None
+            temp_folder = None
             if self.file_type == 'video':
                 video_file = selection[0]
                 audio_file = audio_from_video(selection[0])
                 sound = SoundLoader.load(audio_file)
                 vid = VideoPlayer(source=video_file, state='pause')
                 vidcap = cv2.VideoCapture(video_file)
+                direc = os.path.join(path, 'temp_'+file_name)
+                os.mkdir(direc)
+                print(direc)
             else:
                 audio_file = selection[0]
                 sound = SoundLoader.load(selection[0])
             self._popup.dismiss()
-            content = Bookmark(file_type=self.file_type, sound=sound, vid=vid, vidcap=vidcap, audio_file=audio_file, video_file=video_file, finish_up=write_file_with_bm)
+            content = Bookmark(
+                file_type=self.file_type,
+                sound=sound, vid=vid, vidcap=vidcap,
+                audio_file=audio_file, video_file=video_file, temp_folder=direc,
+                finish_up=write_file_with_bm if video_file is None else write_file_with_bm_and_frames)
             self._popup = Popup(title='Add Bookmarks', content=content, size_hint=(1, 1))
             self._popup.open()
         
