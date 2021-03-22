@@ -4,7 +4,7 @@ from models.units import Units
 import asyncio
 import dbconn as db
 from datetime import datetime
-from functions.write_transcript_to_notion import add_subpage_to_notion, add_unitpage_to_notion
+from functions.write_transcript_to_notion import add_subpage_to_notion, add_unitpage_to_notion, verify_token
 
 user = None
 subjects = []
@@ -32,6 +32,7 @@ async def get_units_for(uid, sub_id, sub_name):
     units[sub_name] = uts
 
 async def get_notes_for(uid, sub_id, unit_id, unit_name, sub_name):
+    print('select * from notes where uid={} and sub_id={} and unit_id={}'.format(uid, sub_id, unit_id))
     q = 'select * from notes where uid=%s and sub_id=%s and unit_id=%s'
     db.mycursor.execute(q, (uid, sub_id, unit_id))
     res = db.mycursor.fetchall()
@@ -43,6 +44,17 @@ async def get_notes_for(uid, sub_id, unit_id, unit_name, sub_name):
     else:
         notes[sub_name] = {unit_name: nt}
     print(notes)
+
+async def add_user(name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login):
+    token_valid = await verify_token(token)
+    if token_valid:
+        url_valid = await verify_homepage_url(homepage_url)
+        if url_valid:
+            # verify email
+            q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            params = (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login)
+            db.mycursor.execute(q, params)
+            db.mydb.commit()
 
 async def add_subject(name, uid, fac_name, color):
     link = await add_subpage_to_notion(name)
@@ -58,9 +70,9 @@ async def add_unit(name, sub_name, sub_id, uid):
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
-async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link):
-    q = 'insert into notes (note_title, uid, sub_id, unit_id, datetime_of_creation, link) values(%s, %s, %s, %s, %s, %s)'
-    params = (title, uid, sub_id, unit_id, dt_of_creation, link)
+async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_bookmarks):
+    q = 'insert into notes (note_title, uid, sub_id, unit_id, datetime_of_creation, link, num_of_bookmarks) values(%s, %s, %s, %s, %s, %s, %s)'
+    params = (title, uid, sub_id, unit_id, dt_of_creation, link, num_of_bookmarks)
     db.mycursor.execute(q, params)
     db.mydb.commit()
-    print('insert into notes values({}, {}, {}, {}, {}, {})'.format(title, uid, sub_id, unit_id, dt_of_creation, link))
+    # print('insert into notes values({}, {}, {}, {}, {}, {})'.format(title, uid, sub_id, unit_id, dt_of_creation, link))

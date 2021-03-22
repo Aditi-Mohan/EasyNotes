@@ -3,7 +3,6 @@ import moviepy.editor as mp
 import os
 
 OUTPUT_AUDIO_FILE = "converted.wav"
-OUTPUT_TEXT_FILE = "recognized.txt"
 
 def audio_from_video(video_file):
     video_clip = mp.VideoFileClip(r"{}".format(video_file))

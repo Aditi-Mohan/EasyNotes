@@ -4,15 +4,18 @@ from kivy.properties import StringProperty, ObjectProperty, ListProperty
 class SaveFile(BoxLayout):
     sub_name = StringProperty()
     file_name = StringProperty()
-    save = ObjectProperty()
-    cancel = ObjectProperty()
+    finish = ObjectProperty()
+    go_to_bookmark = ObjectProperty()
     options = ListProperty()
     unit = None
 
-    def pre_save(self):
+    def pre_save(self, btn):
         if self.ids.file_name.text != '' and self.unit is not None:
             self.file_name = self.ids.file_name.text
-            self.save()
+            if btn == 'next':
+                self.go_to_bookmark()
+            else:
+                self.finish()
 
     def select_unit(self, unit):
         self.unit = unit

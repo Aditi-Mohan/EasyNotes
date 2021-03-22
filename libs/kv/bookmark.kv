@@ -1,0 +1,18 @@
+<Bookmark>:
+    TabbedPanel:
+        id: tp
+        do_default_tab: root.file_type == 'video'
+        tab_width: self.size[0]*0.5
+        default_tab_text: 'Video Bookmark'
+        default_tab_content: root.video_bookmark_content()
+
+    #    MDTextButton:
+        #    id: audio_bookmark
+        #    text: "Audio Bookmark"
+        #    custom_color: root.audio_color
+        #    on_release: root.audio_press_callback
+
+        TabbedPanelItem:
+            id: audio
+            text: 'Audio Bookmark'
+            content: root.audio_bookmark_content()
