@@ -197,14 +197,14 @@ class SubjectScreen(MDScreen):
                 await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
                 self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks)
 
-            async def write_file_with_bm_and_frames(frames, transcript, num_of_bookmarks):
+            async def write_file_with_bm_and_frames(frames, transcript, num_of_bookmarks, frame_dir):
                 self._popup.dismiss()
                 # print(self.ids.fl.children)
                 link = await write_transcript_with_frames_and_bookmarks(file_name, frames, transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
                 num_of_bookmarks = num_of_bookmarks
                 await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
-                print(temp_folder)
-                os.remove(temp_folder)
+                print('Cache generated during conversion store at: '+frame_dir+'\n'+'You can delete this folder after process is complete')
+                # os.remove(frame_dir) # todo: figure out how to delete directory after done
                 self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks, unit_id)
 
             sound = None
@@ -219,7 +219,7 @@ class SubjectScreen(MDScreen):
                 sound = SoundLoader.load(audio_file)
                 vid = VideoPlayer(source=video_file, state='pause')
                 vidcap = cv2.VideoCapture(video_file)
-                direc = os.path.join(path, 'temp_'+file_name)
+                direc = os.path.join(path, os.path.join('easy_notes_cache','temp_'+file_name))
                 os.mkdir(direc)
                 print(direc)
             else:

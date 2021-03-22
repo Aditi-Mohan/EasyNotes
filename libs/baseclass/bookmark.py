@@ -348,7 +348,7 @@ class Bookmark(BoxLayout):
         transcript = await self.split_audio()
 
         # call finishup
-        asynckivy.start(self.finish_up(frame_paths, transcript, len(self.bookmarks)+len(frame_paths)))
+        asynckivy.start(self.finish_up(frame_paths, transcript, len(self.bookmarks)+len(frame_paths), self.temp_folder))
 
         # print(frame_img)
         #     if cv2.waitKey(20) & 0xFF == ord('q'):
