@@ -10,6 +10,9 @@ user = None
 subjects = []
 notes = {}
 units = {}
+latest_notes_loaded = False
+latest_notes = []
+
 
 async def get_subs(uid):
     q = 'select * from subject where uid=%s'
@@ -76,3 +79,47 @@ async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_boo
     db.mycursor.execute(q, params)
     db.mydb.commit()
     # print('insert into notes values({}, {}, {}, {}, {}, {})'.format(title, uid, sub_id, unit_id, dt_of_creation, link))
+
+async def put_last_active(dt):
+    q = 'update user set last_login=%s where uid=%s'
+    params = (dt, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+async def get_latest_notes():
+    global latest_notes_loaded
+    if not latest_notes_loaded:
+        q = 'create view latest_notes_%s as select * from notes where uid=%s order by datetime_of_creation desc limit 10;'
+        db.mycursor.execute(q, (user.uid, user.uid))
+        db.mydb.commit()
+        latest_notes_loaded = True
+    viewname = 'latest_notes_'+str(user.uid)
+    q = 'select * from {}'.format(viewname)
+    db.mycursor.execute(q)
+    res = db.mycursor.fetchall()
+    nt = [Note(*x) for x in res]
+    global latest_notes
+    latest_notes = nt
+
+async def clean_up():
+    viewname = 'latest_notes_'+str(user.uid)
+    q = 'drop view {}'.format(viewname)
+    db.mycursor.execute(q)
+    db.mydb.commit()
+
+def get_color_for_sub(sub_id):
+    for each in subjects:
+        if each.subject_id == sub_id:
+            return each.color
+
+def get_name_for_sub(sub_id):
+    for each in subjects:
+        if each.subject_id == sub_id:
+            return each.subject_name
+
+async def get_name_for_unit(sub_id, sub_name, unit_id):
+    if sub_name not in units.keys():
+        await get_units_for(user.uid, sub_id, sub_name)
+    for each in units[sub_name]:
+        if each.unit_id == unit_id:
+            return each.unit_name

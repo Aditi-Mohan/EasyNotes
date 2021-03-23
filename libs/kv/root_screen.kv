@@ -26,8 +26,10 @@
                 icon: "home"
                 # icon: "chart-pie"
                 on_release:
+                    if root.first: root.load_overview()
+                    else: \
                     scr_manager.transition.direction = "right"
-                    scr_manager.current = "OVERVIEW"
+                    scr_manager.current = 'OVERVIEW1'
 
             NavigationItem:
                 text: "SUBJECTS"

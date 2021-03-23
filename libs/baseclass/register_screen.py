@@ -5,6 +5,8 @@ from models.user import User
 from kivymd.utils import asynckivy
 import asyncio
 
+from libs.baseclass.root_screen import RallyRootScreen
+
 class RallyRegisterScreen(MDScreen):
 
     def login(self,name, passw):
@@ -21,5 +23,5 @@ class RallyRegisterScreen(MDScreen):
             print(user.uid)
             print(user.name)
             print(user.password)
-            self.ids.fingpr.dispatch('on_release')
+            self.parent.switch_to(RallyRootScreen())
         return
