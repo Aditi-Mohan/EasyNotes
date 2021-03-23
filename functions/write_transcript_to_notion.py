@@ -106,17 +106,13 @@ async def write_transcript_with_frames_and_bookmarks(title, frames, transcript, 
             # print(img.file_id)
     return new_page.get_browseable_url()
 
-async def add_subpage_to_notion(subname):
-    token_v2 = get_user_token()
-    homepage_url = get_home_page_url()
+async def add_subpage_to_notion(token_v2, homepage_url, subname):
     client = NotionClient(token_v2=token_v2)
     homepage = client.get_block(homepage_url)
     newsub = homepage.children.add_new(PageBlock, title=subname)
     return newsub.get_browseable_url()
 
-async def add_unitpage_to_notion(unitname, subname):
-    token_v2 = get_user_token()
-    homepage_url = get_home_page_url()
+async def add_unitpage_to_notion(token_v2, homepage_url, unitname, subname):
     client = NotionClient(token_v2=token_v2)
     homepage = client.get_block(homepage_url)
     sub_page = get_doc(homepage, subname)

@@ -57,14 +57,14 @@ async def add_user(name, email, college, course, semester, total_sessions, token
             db.mydb.commit()
 
 async def add_subject(name, uid, fac_name, color):
-    link = await add_subpage_to_notion(name)
+    link = await add_subpage_to_notion(user.token, user.homepage_url, name)
     q = 'insert into subject (sub_name, uid, fac_name, r, g, b, a, link) values(%s, %s, %s, %s, %s, %s, %s, %s)'
     params = (name, uid, fac_name, color[0], color[1], color[2], color[3], link)
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
 async def add_unit(name, sub_name, sub_id, uid):
-    link = await add_unitpage_to_notion(name, sub_name)
+    link = await add_unitpage_to_notion(user.token, user.homepage_url, name, sub_name)
     q = 'insert into units (sub_id, uid, unit_name, link) values(%s, %s, %s, %s)'
     params = (sub_id, uid, name, link)
     db.mycursor.execute(q, params)
