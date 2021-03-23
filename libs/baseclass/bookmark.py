@@ -59,7 +59,7 @@ class Bookmark(BoxLayout):
             else:
                 self.start_enable = True
         self.playing = not self.playing
-        print(self.bookmarks, self.start_enable, self.stop_enable)
+        # print(self.bookmarks, self.start_enable, self.stop_enable)
         # print(self.playing)
 
     def forward_backward(self, btn):
@@ -218,7 +218,7 @@ class Bookmark(BoxLayout):
             text = await print_text(buf.getvalue())
             transcript.append([text, is_bm])
         print(transcript)
-        if self.video_file is None:
+        if self.file_type == 'audio':
             asynckivy.start(self.finish_up(transcript, len(self.bookmarks)))
         else: return transcript
         # to do: make sure secion is atleast 100 bytes
@@ -273,7 +273,7 @@ class Bookmark(BoxLayout):
 
         bx2.add_widget(start)
         bx2.add_widget(stop)
-        if self.video_file is None:
+        if self.file_type == 'audio':
             bx2.add_widget(done)
 
         bx1.add_widget(control_panel)
@@ -357,28 +357,28 @@ class Bookmark(BoxLayout):
         # cv2.destroyAllWindows()
 
     def video_bookmark_content(self):
-                
-        bx1 = BoxLayout(orientation='horizontal', size_hint=(1, 0.9))
-        control_panel = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), spacing=50)
-        bx = BoxLayout(orientation='vertical', size_hint=(1, 0.9))
-        capture = MDFillRoundFlatButton(
-            text = 'Capture Frame',
-            on_release= self.capture_frame,
-        )
-        done = MDFillRoundFlatButton(
-            text = 'Complete with Audio Bookmarks',
-            on_release= lambda x: asynckivy.start(self.get_frames(x)),
-        )
-        self.vid.keep_ratio = True
-        self.vid.size_hint = (0.7, 0.8)
-        scrvw = ScrollView(size_hint=(0.3, 1))
-        list_of_bookmarks = MDList()
-        list_of_bookmarks.add_widget(TwoLineIconListItem(text='Bookmarks'))
-        scrvw.add_widget(list_of_bookmarks)
-        bx1.add_widget(self.vid)
-        bx1.add_widget(scrvw)
-        bx.add_widget(bx1)
-        control_panel.add_widget(capture)
-        control_panel.add_widget(done)
-        bx.add_widget(control_panel)
-        return bx
+         if self.file_type == 'video':
+            bx1 = BoxLayout(orientation='horizontal', size_hint=(1, 0.9))
+            control_panel = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), spacing=50)
+            bx = BoxLayout(orientation='vertical', size_hint=(1, 0.9))
+            capture = MDFillRoundFlatButton(
+                text = 'Capture Frame',
+                on_release= self.capture_frame,
+            )
+            done = MDFillRoundFlatButton(
+                text = 'Complete with Audio Bookmarks',
+                on_release= lambda x: asynckivy.start(self.get_frames(x)),
+            )
+            self.vid.keep_ratio = True
+            self.vid.size_hint = (0.7, 0.8)
+            scrvw = ScrollView(size_hint=(0.3, 1))
+            list_of_bookmarks = MDList()
+            list_of_bookmarks.add_widget(TwoLineIconListItem(text='Bookmarks'))
+            scrvw.add_widget(list_of_bookmarks)
+            bx1.add_widget(self.vid)
+            bx1.add_widget(scrvw)
+            bx.add_widget(bx1)
+            control_panel.add_widget(capture)
+            control_panel.add_widget(done)
+            bx.add_widget(control_panel)
+            return bx
