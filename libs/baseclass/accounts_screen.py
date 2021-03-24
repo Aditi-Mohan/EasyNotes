@@ -55,6 +55,7 @@ class RallyAccountsScreen(MDScreen):
         self.ids.list_view.add_widget(item)
         asynckivy.start(gv.add_subject(name, gv.user.uid, fac_name, color))
         asynckivy.start(gv.get_subs(gv.user.uid))
+        self.subs = gv.subjects
         self._popup.dismiss()
         
 

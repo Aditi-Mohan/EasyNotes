@@ -43,7 +43,7 @@ class RallyOverviewScreen(MDScreen):
                     secondary_text = 'from '+unit_name+' of '+sub_name,
                     tertiary_text = 'On '+i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+"    "+str(i.num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
                     bg_color=[40/255, 44/255, 64/255,1],
-                    on_release = lambda x: self.open_note(i.link),
+                    on_release = self.open_note,
                 )
                 icon = IconLeftWidget(
                     icon="note",
@@ -60,14 +60,29 @@ class RallyOverviewScreen(MDScreen):
         return
     
     def open_note(self, notetile):
-        first_space = str(notetile.text).index(' ')
-        second_space = str(notetile.text).index(' ', first_space+1)
-        third_space = str(notetile.text).index(' ', second_space+1)
+        ind = self.ids.list_view.children.index(notetile)
+        note = self.recent_notes[len(self.recent_notes)-1-ind]
+        print(self.recent_notes[len(self.recent_notes)-1-ind].note_title)
+        link = ''
+        async def get_link():
+            nonlocal link
+            link = await gv.get_link_for_latest(note.subject_id, note.unit_id, note.note_id)
+        asynckivy.start(get_link())
+        webbrowser.open(link)
+        # first_space = str(notetile.secondary_text).index(' ')
+        # last_space = str(notetile.secondary_text).rindex(' ')
+        # unit_name = notetile.secondary_text[first_space:second_space]
+        # sub_name = notetile.secondary_text[second_space:third_space]
+        # note_title = notetile.text
+        # print(sub_name, 'dfs', unit_name, 'fdsdf', note_title)
+        # link = ''
+        # async def get_link():
+        #     await gv.get_quick_links_from_names(sub_name, unit_name, note_title)
+        # asynckivy.start(get_link())
         # query - select s.sub_name, u.unit_name, n.note_title, n.link from notes n inner join units u on n.unit_id=u.unit_id inner join subject s on s.sub_id=u.sub_id;
         # add - where s.uid = 1 or n.uid = 1;
         # either store this as a view - quick_links_and_names - and query the view
         # or add where clause at the end of the query
-        webbrowser.open(link)
 
 class OverviewBox(MDBoxLayout):
     pass

@@ -12,6 +12,7 @@ notes = {}
 units = {}
 latest_notes_loaded = False
 latest_notes = []
+quick_links_from_names_loaded = False
 
 
 async def get_subs(uid):
@@ -26,6 +27,7 @@ async def get_subs(uid):
     return
 
 async def get_units_for(uid, sub_id, sub_name):
+    print('select * from units where uid={} and sub_id={}'.format(uid, sub_id))
     q = 'select * from units where uid=%s and sub_id=%s'
     db.mycursor.execute(q, (uid, sub_id))
     res = db.mycursor.fetchall()
@@ -78,6 +80,10 @@ async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_boo
     params = (title, uid, sub_id, unit_id, dt_of_creation, link, num_of_bookmarks)
     db.mycursor.execute(q, params)
     db.mydb.commit()
+    global latest_notes, latest_notes_loaded
+    await clean_up()
+    latest_notes_loaded = False
+    latest_notes = []
     # print('insert into notes values({}, {}, {}, {}, {}, {})'.format(title, uid, sub_id, unit_id, dt_of_creation, link))
 
 async def put_last_active(dt):
@@ -102,10 +108,15 @@ async def get_latest_notes():
     latest_notes = nt
 
 async def clean_up():
-    viewname = 'latest_notes_'+str(user.uid)
-    q = 'drop view {}'.format(viewname)
-    db.mycursor.execute(q)
-    db.mydb.commit()
+    if latest_notes_loaded:
+        viewname = 'latest_notes_'+str(user.uid)
+        q = 'drop view {}'.format(viewname)
+        db.mycursor.execute(q)
+        db.mydb.commit()
+    # viewname = 'quick_links_from_names_'+str(user.uid)
+    # q = 'drop view {}'.format(viewname)
+    # db.mycursor.execute(q)
+    # db.mydb.commit()
 
 def get_color_for_sub(sub_id):
     for each in subjects:
@@ -123,3 +134,27 @@ async def get_name_for_unit(sub_id, sub_name, unit_id):
     for each in units[sub_name]:
         if each.unit_id == unit_id:
             return each.unit_name
+
+async def get_link_for_latest(sub_id, unit_id, note_id):
+    q = 'select link from latest_notes_%s where sub_id=%s and unit_id=%s and note_id=%s'
+    params = (user.uid, sub_id, unit_id, note_id)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    return res[0][0]
+
+async def get_quick_links_from_names(sub_name, unit_name, note_title):
+    global quick_links_from_names_loaded
+    if not quick_links_from_names_loaded:
+        q = 'create view quick_links_from_names_%s as select s.sub_name, u.unit_name, n.note_title, n.link from notes n inner join units u on n.unit_id=u.unit_id inner join subject s on s.sub_id=u.sub_id where s.uid=%s;'
+        db.mycursor.execute(q, (user.uid, user.uid))
+        db.mydb.commit()
+        quick_links_from_names_loaded = True
+    q = 'select * from quick_links_from_names_%s where sub_name=%s and unit_name=%s and note_title=%s'
+    params = (user.uid, sub_name, unit_name, note_title)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    print(res)
+    if len(res) == 1:
+        print(res)
+    else:
+        print('couldn\'t determine')

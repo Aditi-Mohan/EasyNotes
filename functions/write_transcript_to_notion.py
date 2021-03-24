@@ -67,10 +67,13 @@ async def write_transcript_with_bookmarks(title, transcript, token_v2, url, sub_
     transcript_block = new_page.children.add_new(SubheaderBlock, title="Transcript")
     new_page.children.add_new(DividerBlock)
     for each, is_bm in transcript:
+        text = ''
+        for i in each:
+            text += i
         if is_bm == 0:
-            text_block = new_page.children.add_new(TextBlock, title=each[0])
+            text_block = new_page.children.add_new(TextBlock, title=text)
         else:
-            callout_block = new_page.children.add_new(CalloutBlock, title=each[0], icon=bookmark_emoji)
+            callout_block = new_page.children.add_new(CalloutBlock, title=text, icon=bookmark_emoji)
             callout_block.set("format.block_color", random_color()+"_background")
     return new_page.get_browseable_url()
     

@@ -2,10 +2,12 @@ import os
 import sys
 from pathlib import Path
 import global_vars as gv
+from datetime import datetime
 
 from kivy.lang import Builder
 from kivymd.app import MDApp
 from kivy.core.window import Window
+from kivymd.utils import asynckivy
 # 
 
 # 
