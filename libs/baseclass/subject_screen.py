@@ -86,22 +86,25 @@ class SubjectScreen(MDScreen):
 
     def add_unit(self, listitem):
         def add_unit_callback(name):
-            self.new_unit = name
-            asynckivy.start(gv.add_unit(self.new_unit, self.title, self.sub_id, gv.user.uid))
-            asynckivy.start(gv.get_units_for(gv.user.uid, self.sub_id, self.title))
-            self.units = gv.units[self.title]
-            item = OneLineIconListItem(
-                text= name,
-                on_release=self.show_notes,
-            )
-            icon = IconLeftWidget(
-                icon="note",
-                theme_text_color="Custom",
-                text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-            )
-            item.add_widget(icon)
-            self.ids.list_view.add_widget(item, 1)
-            self.unit_nos = str(int(self.unit_nos) + 1)
+            if name not in [x.unit_name for x in gv.units[self.title]]:
+                self.new_unit = name
+                asynckivy.start(gv.add_unit(self.new_unit, self.title, self.sub_id, gv.user.uid))
+                asynckivy.start(gv.get_units_for(gv.user.uid, self.sub_id, self.title))
+                self.units = gv.units[self.title]
+                item = OneLineIconListItem(
+                    text= name,
+                    on_release=self.show_notes,
+                )
+                icon = IconLeftWidget(
+                    icon="note",
+                    theme_text_color="Custom",
+                    text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+                )
+                item.add_widget(icon)
+                self.ids.list_view.add_widget(item, 1)
+                self.unit_nos = str(int(self.unit_nos) + 1)
+            else:
+                print('Unit '+name+' already exists in '+self.title)
             self._popup.dismiss()
         content = AddUnitDialog(add_unit=add_unit_callback)
         self._popup = Popup(title='Add Unit', content=content, size_hint=(0.9, 0.9))

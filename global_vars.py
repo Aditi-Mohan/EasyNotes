@@ -1,6 +1,8 @@
 from models.subject import Subject
 from models.note import Note
 from models.units import Units
+from models.friend_requests import FriendRequests
+from models.friend import Friend
 import asyncio
 import dbconn as db
 from datetime import datetime
@@ -13,7 +15,8 @@ units = {}
 latest_notes_loaded = False
 latest_notes = []
 quick_links_from_names_loaded = False
-
+pending = []
+friends = []
 
 async def get_subs(uid):
     q = 'select * from subject where uid=%s'
@@ -158,3 +161,78 @@ async def get_quick_links_from_names(sub_name, unit_name, note_title):
         print(res)
     else:
         print('couldn\'t determine')
+
+async def is_uid_valid(uid):
+    q = 'select uid from user'
+    db.mycursor.execute(q)
+    res = db.mycursor.fetchall()
+    print(uid in [x[0] for x in res])
+    if uid in [x[0] for x in res]:
+        return True
+    else: return False
+
+async def send_friend_request(req_to, comments, dt):
+    q = 'select * from friend_requests where req_from=%s and req_to=%s'
+    params = (user.uid, req_to)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if len(res) == 0:
+        q = 'select * from friends where (user1=%s and user2=%s) or (user1=%s and user2=%s)'
+        params = (user.uid, req_to, req_to, user.uid)
+        db.mycursor.execute(q, params)
+        res = db.mycursor.fetchall()
+        if len(res) == 0:
+            q = 'insert into friend_requests values(%s, %s, %s, %s)'
+            params = (user.uid, req_to, dt, comments)
+            db.mycursor.execute(q, params)
+            db.mydb.commit()
+        else:
+            print('already friends')
+    else:
+        print('already requested')
+
+async def get_pending_friend_requests():
+    q = 'select p.req_from, p.sent_on, p.comments, u.name, u.college, u.course, u.semester from friend_requests p inner join user u on p.req_from=u.uid where p.req_to=%s'
+    db.mycursor.execute(q, (user.uid,))
+    res = db.mycursor.fetchall()
+    global pending
+    pending = [FriendRequests(*x) for x in res]
+
+async def accept_friend_request(req_from, dt):
+    q = 'insert into friends values(%s, %s, %s, %s, %s, %s)'
+    params = (user.uid, req_from, dt, 0, 0, dt)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'delete from friend_requests where req_from=%s and req_to=%s'
+    params = (req_from, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'insert into notifications values(%s, %s)'
+    notif_title = 'Friend Request Accepted by'+user.name
+    params = (req_from, notif_title)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+async def reject_friend_request(req_from):
+    q = 'delete from friend_requests where req_from=%s and req_to=%s'
+    params = (req_from, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'insert into notifications values(%s, %s)'
+    notif_title = 'Friend Request Rejected by '+user.name
+    params = (req_from, notif_title)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+async def get_friends():
+    q = 'select f.user2, u.name, u.college, u.course, u.semester, f.added_on, f.notes_sent, f.notes_received, f.last_interaction from user u inner join friends f on u.uid=f.user2 where f.user1=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    res1 = db.mycursor.fetchall()
+    q = 'select f.user1, u.name, u.college, u.course, u.semester, f.added_on, f.notes_sent, f.notes_received, f.last_interaction from user u inner join friends f on u.uid=f.user1 where f.user2=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    res2 = db.mycursor.fetchall()
+    global friends
+    friends = [Friend(*x) for x in res1]
+    friends = [*friends, *[Friend(*x) for x in res2]]

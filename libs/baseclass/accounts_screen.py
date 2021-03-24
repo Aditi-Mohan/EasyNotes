@@ -39,23 +39,26 @@ class RallyAccountsScreen(MDScreen):
         self._popup.open()
     
     def add_sub_callback(self, name, fac_name, color):
-        item = TwoLineIconListItem(
-                text=name,
-                secondary_text=fac_name,
-                theme_text_color="Custom",
-                text_color= color,
-                on_release= self.go_to_sub_screen
-                )
-        icon = IconLeftWidget(
-                icon='book',
-                theme_text_color="Custom",
-                text_color= color,
-                )
-        item.add_widget(icon)
-        self.ids.list_view.add_widget(item)
-        asynckivy.start(gv.add_subject(name, gv.user.uid, fac_name, color))
-        asynckivy.start(gv.get_subs(gv.user.uid))
-        self.subs = gv.subjects
+        if name not in [x.subject_name for x in gv.subjects]:
+            item = TwoLineIconListItem(
+                    text=name,
+                    secondary_text=fac_name,
+                    theme_text_color="Custom",
+                    text_color= color,
+                    on_release= self.go_to_sub_screen
+                    )
+            icon = IconLeftWidget(
+                    icon='book',
+                    theme_text_color="Custom",
+                    text_color= color,
+                    )
+            item.add_widget(icon)
+            self.ids.list_view.add_widget(item)
+            asynckivy.start(gv.add_subject(name, gv.user.uid, fac_name, color))
+            asynckivy.start(gv.get_subs(gv.user.uid))
+            self.subs = gv.subjects
+        else:
+            print('Subject '+name+' already exists')
         self._popup.dismiss()
         
 
