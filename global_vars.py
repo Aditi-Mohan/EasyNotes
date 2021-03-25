@@ -3,6 +3,7 @@ from models.note import Note
 from models.units import Units
 from models.friend_requests import FriendRequests
 from models.friend import Friend
+from models.notificatins import Notitification
 import asyncio
 import dbconn as db
 from datetime import datetime
@@ -17,6 +18,7 @@ latest_notes = []
 quick_links_from_names_loaded = False
 pending = []
 friends = []
+notifs = []
 
 async def get_subs(uid):
     q = 'select * from subject where uid=%s'
@@ -207,20 +209,20 @@ async def accept_friend_request(req_from, dt):
     params = (req_from, user.uid)
     db.mycursor.execute(q, params)
     db.mydb.commit()
-    q = 'insert into notifications values(%s, %s)'
-    notif_title = 'Friend Request Accepted by'+user.name
-    params = (req_from, notif_title)
+    q = 'insert into notifications values(%s, %s, %s)'
+    notif_title = 'Friend Request Accepted by '+user.name
+    params = (req_from, notif_title, dt)
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
-async def reject_friend_request(req_from):
+async def reject_friend_request(req_from, dt):
     q = 'delete from friend_requests where req_from=%s and req_to=%s'
     params = (req_from, user.uid)
     db.mycursor.execute(q, params)
     db.mydb.commit()
-    q = 'insert into notifications values(%s, %s)'
+    q = 'insert into notifications values(%s, %s, %s)'
     notif_title = 'Friend Request Rejected by '+user.name
-    params = (req_from, notif_title)
+    params = (req_from, notif_title, dt)
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
@@ -236,3 +238,30 @@ async def get_friends():
     global friends
     friends = [Friend(*x) for x in res1]
     friends = [*friends, *[Friend(*x) for x in res2]]
+
+async def remove_friend(fid, dt):
+    q = 'delete from friends where (user1=%s and user2=%s) or (user1=%s and user2=%s)'
+    params = (user.uid, fid, fid, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    # res = db.mycursor.fetchall()
+    # print(res)
+    q = 'insert into notifications values(%s, %s, %s)'
+    notif_title = 'You were Unfriended by '+user.name
+    params = (fid, notif_title, dt)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+async def get_notifications():
+    q = 'select notif_title, dt from notifications where notif_for=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    global notifs
+    notifs = [Notitification(*x) for x in res]
+
+async def delete_notif(dt):
+    q = 'delete from notifications where notif_for=%s and dt=%s'
+    params = (user.uid, dt)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()

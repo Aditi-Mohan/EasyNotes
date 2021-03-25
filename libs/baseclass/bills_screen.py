@@ -65,9 +65,9 @@ class RallyBillsScreen(MDScreen):
             self._popup.dismiss()
             self.on_pre_enter()
 
-
         async def reject_callback(req_from):
-            await gv.reject_friend_request(req_from)
+            dt = datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
+            await gv.reject_friend_request(req_from, dt)
             self._popup.dismiss()
             self.on_pre_enter()
 
@@ -78,10 +78,25 @@ class RallyBillsScreen(MDScreen):
     def show_friend_details(self, tile):
         # ind = self.ids.friends.children.index(tile)
         friend = [x for x in self.friends if x.name == tile.text][0]
+
+        def rem_fr():
+
+            async def callback(proceed):
+                if proceed:
+                    dt = datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
+                    await gv.remove_friend(friend.friend_id, dt)
+                self._popup.content._popup.dismiss()
+                self._popup.dismiss()
+                self.on_pre_enter()
+
+            content = Conformation(name=friend.name, callback=callback)
+            self._popup.content._popup = Popup(content=content, size_hint=(0.5, 0.5))
+            self._popup.content._popup.open()
+
         content = FriendDetails(
             friend=friend, last_interaction=friend.last_interaction.strftime(r"%m/%d/%Y, %H:%M:%S"),
             semester=str(friend.semester), added_on=friend.added_on.strftime(r"%m/%d/%Y, %H:%M:%S"),
-            notes_sent=str(friend.notes_sent), notes_received=str(friend.notes_received))
+            notes_sent=str(friend.notes_sent), notes_received=str(friend.notes_received), rem_fr=rem_fr)
         self._popup = Popup(title='Details', content=content, size_hint=(0.9, 0.9))
         self._popup.open()
 
@@ -163,3 +178,15 @@ class FriendDetails(FloatLayout):
     added_on = StringProperty()
     notes_sent = StringProperty()
     notes_received = StringProperty()
+    rem_fr = ObjectProperty()
+
+class Conformation(FloatLayout):
+    name = StringProperty()
+    callback = ObjectProperty()
+
+    def callback_callback(self, option):
+        proceed = False
+        if option == 'yes':
+            proceed = True
+        print(proceed)
+        asynckivy.start(self.callback(proceed))

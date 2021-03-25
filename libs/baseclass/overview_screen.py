@@ -6,28 +6,45 @@ from kivymd.uix.button import MDFlatButton
 from kivy.clock import Clock
 from kivymd.utils import asynckivy
 
-from kivymd.uix.list import MDList, OneLineListItem, ThreeLineIconListItem, IconLeftWidget
+from kivymd.uix.list import MDList, OneLineListItem, ThreeLineIconListItem, IconLeftWidget,  TwoLineIconListItem
+from kivy.uix.popup import Popup
+from kivy.uix.floatlayout import FloatLayout
 
 import global_vars as gv
 import webbrowser
+from datetime import datetime
 
 
 class RallyOverviewScreen(MDScreen):
     username = StringProperty('')
+    last_active = StringProperty('')
     recent_notes = []
+    notifs = []
 
     def on_pre_enter(self, *args):
-        print('dfs')
         self.username = gv.user.name
+        self.last_active = gv.user.last_login.strftime(r"%m/%d/%Y, %H:%M:%S")
         if len(gv.latest_notes) == 0:
             asynckivy.start(gv.get_latest_notes())
+        asynckivy.start(gv.get_notifications())
         self.recent_notes = gv.latest_notes
+        self.notifs = gv.notifs
         if len(self.children) != 0:
+            ntl = self.ids.notifs
+            ntl.clear_widgets()
+            ntl.add_widget(
+                OneLineListItem(
+                    text='Notifications',
+                    font_style='H6',
+                    # on_release=delete all notifications
+                )
+            )      
             lst = self.ids.list_view
             lst.clear_widgets()
             lst.add_widget(
                 OneLineListItem(
-                    text='Recent Notes',
+                    text='Quick Access',
+                    font_style='H6',
                     bg_color=[40/255, 44/255, 64/255,1],
                 )
             )
@@ -52,9 +69,20 @@ class RallyOverviewScreen(MDScreen):
                 )
                 item.add_widget(icon)
                 lst.add_widget(item)
+            for i in self.notifs:
+                item = TwoLineIconListItem(
+                    text=i.notif_title,
+                    secondary_text=i.dt.strftime(r"%m/%d/%Y, %H:%M:%S"),
+                    on_release=self.open_notif,
+                )
+                icon = IconLeftWidget(
+                    icon='message'
+                )
+                item.add_widget(icon)
+                ntl.add_widget(item)
     
-    def scan_for_pending_requests(self):
-        return
+    def scan_for_friend_recom(self):
+        return 
     
     def scan_for_pending_shares(self):
         return
@@ -83,6 +111,25 @@ class RallyOverviewScreen(MDScreen):
         # add - where s.uid = 1 or n.uid = 1;
         # either store this as a view - quick_links_and_names - and query the view
         # or add where clause at the end of the query
+    
+    def open_notif(self, tile):
+
+        async def delete_notif():
+            dt = datetime.strptime(tile.secondary_text, r"%m/%d/%Y, %H:%M:%S")
+            await gv.delete_notif(dt.strftime(r"%Y-%m-%d %H:%M:%S"))
+            self.on_pre_enter()
+            self._popup.dismiss()
+            
+        content = NotificationPopup(content=tile, delete_notif_callback=delete_notif)
+        self._popup = Popup(title='Notification', content=content, size_hint=(0.6, 0.6))
+        self._popup.open()
+
+class NotificationPopup(FloatLayout):
+    content = ObjectProperty()
+    delete_notif_callback = ObjectProperty()
+
+    def delete_notif(self):
+        asynckivy.start(self.delete_notif_callback())
 
 class OverviewBox(MDBoxLayout):
     pass

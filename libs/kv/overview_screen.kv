@@ -4,12 +4,82 @@
         id:user_info
         orientation: 'horizontal'
 
-        Label:
-            text: 'Welcome '+root.username
-            font_style: 'H3'
+        FloatLayout:
+            size_hint: 0.6, 0.6
+            pos_hint: {'x': 0, 'y': 0}
         
+            Label:
+                text: '[b]Welcome '+root.username+'[/b]'
+                markup: True
+    			text_size: self.size
+		    	font_size: 30
+		    	size_hint: 0.99, 0.1
+		    	halign: 'left'
+		    	pos_hint: {'x': 0.01, 'y': 1.5}
+		    	canvas.before:
+    	    		Color:
+		    	    	rgba: [0, 0, 0, 0]
+		    		Rectangle:
+			    		pos: self.pos
+			    		size: self.size
+
+            Label:
+                text: 'Last active on '+root.last_active
+    			text_size: self.size
+		    	font_style: 'Subtitle1'
+		    	size_hint: 0.96, 0.1
+		    	halign: 'left'
+		    	pos_hint: {'x': 0.04, 'y': 1.45}
+		    	canvas.before:
+    	    		Color:
+		    	    	rgba: [0, 0, 0, 0]
+		    		Rectangle:
+			    		pos: self.pos
+			    		size: self.size
+                
+            ScrollView:
+                size_hint: 1, 0.8
+                pos_hint: {'x': 0, 'y': 0.6}
+                MDList:
+                    id: list_view
+
         ScrollView:
             size_hint: 0.4, 1
             MDList:
-                id: list_view
-        
+                id: notifs
+
+<NotificationPopup>:
+    FloatLayout:
+
+        Label:
+            text: root.content.text
+            font_size: 20
+    		text_size: self.size
+	    	size_hint: 0.9, 0.1
+		    halign: 'left'
+			pos_hint: {'x': 0.5, 'y': 1.2}
+	    	canvas.before:
+	    		Color:
+		    	    rgba: [0, 0, 0, 0]
+		    	Rectangle:
+					pos: self.pos
+		    		size: self.size
+
+        Label:
+            text: 'Sent On: '+root.content.secondary_text
+    		text_size: self.size
+	    	size_hint: 0.9, 0.1
+		    halign: 'left'
+			pos_hint: {'x': 0.5, 'y': 1.1}
+	    	canvas.before:
+	    		Color:
+		    	    rgba: [0, 0, 0, 0]
+		    	Rectangle:
+					pos: self.pos
+		    		size: self.size
+	    
+        MDFillRoundFlatButton:
+            text: 'DELETE'
+    	    md_bg_color: 1, 0, 0, 1
+    		pos_hint: {'x': 0.75, 'y': 0.6}
+	    	on_press: root.delete_notif()
