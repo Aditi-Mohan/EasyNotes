@@ -3,6 +3,7 @@ from notion.block import *
 from datetime import datetime
 from utils.random_emoji import bookmark_emoji
 from utils.random_color import random_color
+from copy import copy
 
 # def get_user_token():
 #     # replace with fetching token for that user from database
@@ -130,3 +131,39 @@ async def add_unitpage_to_notion(token_v2, homepage_url, unitname, subname):
 #                 "osidfjosidfi sodifiguhf jfghdkjfhgkdjhf dkjfhgkjhktjehrkj jhksjdhkkjshd fsjdhfkjhfk skdjfh jhjhgkj fkjghkdjfhgkdjf"]
     
 #     write_transcript("Lesson 4", transcript=transcript, sub_name="Happiness")
+
+async def copy_page(token_v2, homepage_url, sub_name, unit_name, title, f_token_v2, f_homepage_url, f_sub_name, f_unit_name, f_title, dt):
+    client = NotionClient(token_v2=token_v2)
+    homepage = client.get_block(homepage_url)
+    sub_page = get_doc(homepage, sub_name)
+    unit_page = get_doc(sub_page, unit_name)
+    f_client = NotionClient(token_v2=f_token_v2)
+    f_homepage = f_client.get_block(f_homepage_url)
+    f_sub_page = get_doc(f_homepage, f_sub_name)
+    f_unit_page = get_doc(f_sub_page, f_unit_name)
+    f_note_page = get_doc(f_unit_page, f_title)
+    new_page = unit_page.children.add_new(PageBlock)
+    _copy_properties(f_note_page, new_page)
+    date_block = new_page.children.add_new(TextBlock, title="Received on: "+dt)
+    date_block.set("format.block_color", "blue_background")
+    new_page.title = title
+    return new_page.get_browseable_url()
+
+def _copy_properties(old, new):
+    for prop in dir(old):
+        try:
+            if not prop.startswith('_'):
+                attr = getattr(old, prop)
+                # copying tags creates a whole new set of problems
+                if prop != 'tags' and attr != '' and not callable(attr):
+                    setattr(new, prop, copy(attr))
+
+        # notion-py raises AttributeError when it can't assign an attribute
+        except AttributeError:
+            pass
+
+    if bool(old.children):
+        for old_child in old.children:
+            new_child = new.children.add_new(old_child.__class__)
+            _copy_properties(old_child, new_child)
+

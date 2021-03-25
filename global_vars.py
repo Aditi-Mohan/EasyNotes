@@ -4,6 +4,7 @@ from models.units import Units
 from models.friend_requests import FriendRequests
 from models.friend import Friend
 from models.notificatins import Notitification
+from models.share_request import ShareRequest
 import asyncio
 import dbconn as db
 from datetime import datetime
@@ -19,6 +20,7 @@ quick_links_from_names_loaded = False
 pending = []
 friends = []
 notifs = []
+pending_shares = []
 
 async def get_subs(uid):
     q = 'select * from subject where uid=%s'
@@ -80,9 +82,9 @@ async def add_unit(name, sub_name, sub_id, uid):
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
-async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_bookmarks):
-    q = 'insert into notes (note_title, uid, sub_id, unit_id, datetime_of_creation, link, num_of_bookmarks) values(%s, %s, %s, %s, %s, %s, %s)'
-    params = (title, uid, sub_id, unit_id, dt_of_creation, link, num_of_bookmarks)
+async def add_note(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_bookmarks, shared_from):
+    q = 'insert into notes (note_title, uid, sub_id, unit_id, datetime_of_creation, link, num_of_bookmarks, shared_from) values(%s, %s, %s, %s, %s, %s, %s, %s)'
+    params = (title, uid, sub_id, unit_id, dt_of_creation, link, num_of_bookmarks, shared_from)
     db.mycursor.execute(q, params)
     db.mydb.commit()
     global latest_notes, latest_notes_loaded
@@ -231,7 +233,7 @@ async def get_friends():
     params = (user.uid,)
     db.mycursor.execute(q, params)
     res1 = db.mycursor.fetchall()
-    q = 'select f.user1, u.name, u.college, u.course, u.semester, f.added_on, f.notes_sent, f.notes_received, f.last_interaction from user u inner join friends f on u.uid=f.user1 where f.user2=%s'
+    q = 'select f.user1, u.name, u.college, u.course, u.semester, f.added_on, f.notes_received, f.notes_sent, f.last_interaction from user u inner join friends f on u.uid=f.user1 where f.user2=%s'
     params = (user.uid,)
     db.mycursor.execute(q, params)
     res2 = db.mycursor.fetchall()
@@ -252,6 +254,21 @@ async def remove_friend(fid, dt):
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
+async def get_sent_from_fr(fid):
+    q = 'select s.note_title, n.note_title, n.datetime_of_creation, s.link from notes n inner join notes s on s.note_id=n.shared_from where n.uid=%s and n.shared_from = any(select note_id from notes where uid=%s)'
+    params = (fid, user.uid)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    return res
+
+async def get_received_from_fr(fid):
+    q = 'select s.note_title, n.note_title, n.datetime_of_creation, s.link from notes n inner join notes s on s.note_id=n.shared_from where n.uid=%s and n.shared_from = any(select note_id from notes where uid=%s)'
+    params = (user.uid, fid)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    return res
+
+
 async def get_notifications():
     q = 'select notif_title, dt from notifications where notif_for=%s'
     params = (user.uid,)
@@ -265,3 +282,127 @@ async def delete_notif(dt):
     params = (user.uid, dt)
     db.mycursor.execute(q, params)
     db.mydb.commit()
+
+async def check_if_fid_friend(fid, note_id):
+    q = 'select * from friends where (user1=%s and user2=%s) or (user1=%s and user2=%s)'
+    params = (user.uid, fid, fid, user.uid)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if len(res) == 0:
+        print('cannot share to people who are not friends')
+    else:
+        q = 'select * from share_request where req_to=%s and note_id=%s'
+        params = (fid, note_id)
+        db.mycursor.execute(q, params)
+        res = db.mycursor.fetchall()
+        if len(res) == 0:
+            return True
+        else:
+            print('already sent shared request for this note to this user')
+
+async def send_share_req(req_to, note_id, sub_name, unit_name, sent_on, note_title):
+    q = 'insert into share_request values(%s, %s, %s, %s, %s, %s, %s, %s)'
+    params = (req_to, user.uid, note_id, sub_name, unit_name, sent_on, note_title, user.name)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'insert into notifications values(%s, %s, %s)'
+    notif_title = user.name+' Wants to Share A Note With You'
+    params = (req_to, notif_title, sent_on)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+
+async def get_pending_shares():
+    q = 'select req_from, note_id, sub_name, unit_name, sent_on, note_title, friend_name from share_request where req_to=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    p = [ShareRequest(*x) for x in res]
+    global pending_shares
+    pending_shares = p
+
+async def get_link_of_page(note_id):
+    q = 'select link from notes where note_id=%s'
+    params = (note_id,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    return res[0][0]
+
+async def accept_share_request(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_bookmarks, shared_from, req_dt, fid, og_title):
+    await add_note(sub_id, uid, unit_id, title, dt_of_creation, link, num_of_bookmarks, shared_from)
+    # delete from share_request and notification
+    q = 'delete from notifications where notif_for=%s and dt=%s'
+    params = (user.uid, req_dt)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'delete from share_request where req_to=%s and req_from=%s and note_id=%s'
+    params = (user.uid, fid, shared_from)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    # send acceptance notification
+    q = 'insert into notifications values(%s, %s, %s)'
+    notif_title = og_title+' was Shared With '+user.name+' Successfully'
+    params = (fid, notif_title, dt_of_creation)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    # inc count for notes received from that friend
+    is_user1 = False
+    q = 'select notes_received from friends where user1=%s and user2=%s'
+    params = (user.uid, fid)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if len(res) == 1:
+        is_user1 = True
+        count = res[0][0]
+    else:
+        q = 'select notes_sent from friends where user1=%s and user2=%s'
+        params = (fid, user.uid)
+        db.mycursor.execute(q, params)
+        res = db.mycursor.fetchall()
+        count = res[0][0]
+    count += 1
+    print(count)
+    if is_user1:
+        q = 'update friends set notes_received=%s where user1=%s and user2=%s'
+        params = (count, user.uid, fid)
+        db.mycursor.execute(q, params)
+        db.mydb.commit()
+    else:
+        q = 'update friends set notes_sent=%s where user1=%s and user2=%s'
+        params = (count, user.uid, fid)
+        db.mycursor.execute(q, params)
+        db.mydb.commit()
+    
+async def get_list_of_subs_and_units():
+    if len(subjects) == 0:
+        await get_subs(user.uid)
+    for each in subjects:
+        if each.subject_name not in units.keys():
+            await get_units_for(user.uid, each.subject_id, each.subject_name)
+        print([x.unit_name for x in units[each.subject_name]])
+    print([x.subject_name for x in subjects])
+
+async def get_friend_token_url(fid):
+    q = 'select token, homepage_url from user where uid=%s'
+    params = (fid,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    return res[0]
+
+async def get_nbm(note_id):
+    q = 'select num_of_bookmarks from notes where note_id=%s'
+    params = (note_id,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    return res[0][0]
+# async def get_share_note_info(note_id):
+#     q = 'select s.req_from, u.name, u.college, u.course, u.semester, s.note_id, s.note_title, s.sub_name, s.unit_name, s.sent_on from share_request s inner join user u on u.uid=s.req_from where s.req_to=%s and s.note_id=%s'
+#     params = (user.uid, note_id)
+#     db.mycursor.execute(q, params)
+#     res = db.mycursor.fetchall()
+#     return res[0]
+
+# def get_name_of_fr(fid):
+#     if len(friends) == 0:
+#         fr = [x for x in friends if x.friend_id == fid][0]
+#     return fr.name

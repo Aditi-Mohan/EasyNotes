@@ -72,3 +72,34 @@
                 md_bg_color: root.btn_color
                 pos: self.parent.width-self.width-20, 15
                 on_release: root.upload('audio')
+
+<OptionsPopup>:
+    BoxLayout:
+        pos_hint: {'x': 0, 'y': 0}
+        size_hint: 1, 1
+        orientation: 'vertical'
+
+        OneLineListItem:
+            text: 'SHARE'
+            on_release: root.share()
+        
+        OneLineListItem:
+            text: 'DELETE'
+            bg_color: 1, 0, 0, 1
+            on_release: root.delete()
+
+<ShareInfoPopup>:
+    FloatLayout:
+
+		RallyTextField:
+			id: fid
+			focus: True
+			hint_text: "Uid of Friend"
+			size_hint_x: 0.95
+            pos_hint: {'x': 0.575, 'y': 1.3}
+			input_filter: 'int'
+
+        MDFillRoundFlatButton:
+            text: 'DONE'
+            pos_hint: {'x': 0.95, 'y': 0.8}
+	    	on_press: root.send_share_callback()

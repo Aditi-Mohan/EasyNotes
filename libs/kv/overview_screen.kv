@@ -4,44 +4,54 @@
         id:user_info
         orientation: 'horizontal'
 
-        FloatLayout:
-            size_hint: 0.6, 0.6
-            pos_hint: {'x': 0, 'y': 0}
-        
-            Label:
-                text: '[b]Welcome '+root.username+'[/b]'
-                markup: True
-    			text_size: self.size
-		    	font_size: 30
-		    	size_hint: 0.99, 0.1
-		    	halign: 'left'
-		    	pos_hint: {'x': 0.01, 'y': 1.5}
-		    	canvas.before:
-    	    		Color:
-		    	    	rgba: [0, 0, 0, 0]
-		    		Rectangle:
-			    		pos: self.pos
-			    		size: self.size
+		BoxLayout:
+			orientation: 'vertical'
+			size_hint: 0.6, 1
 
-            Label:
-                text: 'Last active on '+root.last_active
-    			text_size: self.size
-		    	font_style: 'Subtitle1'
-		    	size_hint: 0.96, 0.1
-		    	halign: 'left'
-		    	pos_hint: {'x': 0.04, 'y': 1.45}
-		    	canvas.before:
-    	    		Color:
-		    	    	rgba: [0, 0, 0, 0]
-		    		Rectangle:
-			    		pos: self.pos
-			    		size: self.size
-                
+			FloatLayout:
+				size_hint: 1, 0.6
+				pos_hint: {'x': 0, 'y': 0}
+			
+				Label:
+					text: '[b]Welcome '+root.username+'[/b]'
+					markup: True
+					text_size: self.size
+					font_size: 30
+					size_hint: 0.96, 0.1
+					halign: 'left'
+					pos_hint: {'x': 0.04, 'y': 0.85}
+					canvas.before:
+						Color:
+							rgba: [0, 0, 0, 0]
+						Rectangle:
+							pos: self.pos
+							size: self.size
+
+				Label:
+					text: 'Last active on '+root.last_active
+					text_size: self.size
+					font_style: 'Subtitle1'
+					size_hint: 0.96, 0.1
+					halign: 'left'
+					pos_hint: {'x': 0.04, 'y': 0.8}
+					canvas.before:
+						Color:
+							rgba: [0, 0, 0, 0]
+						Rectangle:
+							pos: self.pos
+							size: self.size
+					
+				ScrollView:
+					size_hint: 1, 0.75
+					pos_hint: {'x': 0, 'y': 0.025}
+					MDList:
+						id: list_view
+
             ScrollView:
-                size_hint: 1, 0.8
-                pos_hint: {'x': 0, 'y': 0.6}
+                size_hint: 1, 0.4
+                pos_hint: {'x': 0, 'y': 0}
                 MDList:
-                    id: list_view
+                    id: pending_shares
 
         ScrollView:
             size_hint: 0.4, 1
@@ -55,9 +65,9 @@
             text: root.content.text
             font_size: 20
     		text_size: self.size
-	    	size_hint: 0.9, 0.1
-		    halign: 'left'
-			pos_hint: {'x': 0.5, 'y': 1.2}
+	    	size_hint: 1, 0.1
+		    halign: 'center'
+			pos_hint: {'x': 0.375, 'y': 1.2}
 	    	canvas.before:
 	    		Color:
 		    	    rgba: [0, 0, 0, 0]
@@ -68,9 +78,9 @@
         Label:
             text: 'Sent On: '+root.content.secondary_text
     		text_size: self.size
-	    	size_hint: 0.9, 0.1
-		    halign: 'left'
-			pos_hint: {'x': 0.5, 'y': 1.1}
+	    	size_hint: 1, 0.1
+		    halign: 'center'
+			pos_hint: {'x': 0.375, 'y': 1.1}
 	    	canvas.before:
 	    		Color:
 		    	    rgba: [0, 0, 0, 0]
@@ -83,3 +93,125 @@
     	    md_bg_color: 1, 0, 0, 1
     		pos_hint: {'x': 0.75, 'y': 0.6}
 	    	on_press: root.delete_notif()
+
+<ShareRequestInfo>:
+	FloatLayout:
+
+        Label:
+            text: 'Note: '+root.share_req.note_title
+    		text_size: self.size
+			font_size: 30
+	    	size_hint: 0.9, 0.1
+		    halign: 'left'
+			valign: 'middle'
+			pos_hint: {'x': 0.7, 'y': 1.5}
+	    	canvas.before:
+	    		Color:
+		    	    rgba: [0, 0, 0, 0]
+		    	Rectangle:
+					pos: self.pos
+		    		size: self.size
+
+        Label:
+            text: 'From: '+root.share_req.friend_name
+    		text_size: self.size
+			font_size: 20
+	    	size_hint: 0.9, 0.1
+		    halign: 'left'
+			valign: 'middle'
+			pos_hint: {'x': 0.7, 'y': 1.35}
+	    	canvas.before:
+	    		Color:
+		    	    rgba: [0, 0, 0, 0]
+		    	Rectangle:
+					pos: self.pos
+		    		size: self.size
+
+        Label:
+            text: 'Subject: '+root.share_req.sub_name
+    		text_size: self.size
+			font_size: 20
+	    	size_hint: 0.9, 0.1
+		    halign: 'left'
+			valign: 'middle'
+			pos_hint: {'x': 0.7, 'y': 1.25}
+	    	canvas.before:
+	    		Color:
+		    	    rgba: [0, 0, 0, 0]
+		    	Rectangle:
+					pos: self.pos
+		    		size: self.size
+
+        Label:
+            text: 'Unit: '+root.share_req.unit_name
+    		text_size: self.size
+			font_size: 20
+	    	size_hint: 0.9, 0.1
+		    halign: 'left'
+			valign: 'middle'
+			pos_hint: {'x': 0.7, 'y': 1.15}
+	    	canvas.before:
+	    		Color:
+		    	    rgba: [0, 0, 0, 0]
+		    	Rectangle:
+					pos: self.pos
+		    		size: self.size
+
+        Label:
+            text: 'Sent On: '+root.sent_on
+    		text_size: self.size
+			font_size: 18
+	    	size_hint: 0.9, 0.1
+		    halign: 'left'
+			valign: 'middle'
+			pos_hint: {'x': 0.7, 'y': 1.05}
+	    	canvas.before:
+	    		Color:
+		    	    rgba: [0, 0, 0, 0]
+		    	Rectangle:
+					pos: self.pos
+		    		size: self.size
+
+        MDFillRoundFlatButton:
+            text: 'ACCEPT'
+    		pos_hint: {'x': 0.7, 'y': 0.8}
+	    	on_press: root.choice('accept')
+
+        MDFillRoundFlatButton:
+            text: 'REJECT'
+    	    md_bg_color: 1, 0, 0, 1
+    		pos_hint: {'x': 1.1, 'y': 0.8}
+	    	#on_press: root.choice('reject')
+
+<SelectSubAndUnit>:
+	FloatLayout:
+
+        MDTextField:
+            id: file_name
+            hint_text: 'File Name'
+			text: root.og_name
+			focus: True
+            size_hint_x: 0.95         
+            pos_hint: {'x': 0.4, 'y': 1.75}
+
+        Spinner:
+            id: subs
+            text: 'Select Subject'
+            values: root.subs
+            on_text: root.set_sub(subs.text)
+            size_hint: (0.3, 0.25)
+            pos_hint: {'x': 0.525, 'y': 1.5}
+
+        Spinner:
+            id: units
+            text: 'Select Units'
+            values: root.units
+            on_text: root.set_unit(units.text)
+			disabled: True if subs.text == 'Select Subject' else False
+            size_hint: (0.3, 0.25)
+            pos_hint: {'x': 0.925, 'y': 1.5}
+
+        MDFillRoundFlatButton:
+            text: 'DONE'
+    		pos_hint: {'x': 0.75, 'y': 1.2}
+	    	on_press: root.choice()

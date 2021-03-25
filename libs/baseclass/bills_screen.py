@@ -4,9 +4,11 @@ from kivy.uix.splitter import Splitter
 from kivy.uix.label import Label
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty, StringProperty, ListProperty
 from kivymd.utils import asynckivy
 from kivymd.uix.list import OneLineListItem, OneLineIconListItem, TwoLineIconListItem, IconLeftWidget, IconRightWidget
+from kivy.clock import Clock
+
 
 import global_vars as gv
 from datetime import datetime
@@ -78,6 +80,14 @@ class RallyBillsScreen(MDScreen):
     def show_friend_details(self, tile):
         # ind = self.ids.friends.children.index(tile)
         friend = [x for x in self.friends if x.name == tile.text][0]
+        sent = []
+        received = []
+
+        async def get_sent_and_received():
+            nonlocal sent, received
+            sent = await gv.get_sent_from_fr(friend.friend_id)
+            received = await gv.get_received_from_fr(friend.friend_id)
+        asynckivy.start(get_sent_and_received())
 
         def rem_fr():
 
@@ -96,7 +106,9 @@ class RallyBillsScreen(MDScreen):
         content = FriendDetails(
             friend=friend, last_interaction=friend.last_interaction.strftime(r"%m/%d/%Y, %H:%M:%S"),
             semester=str(friend.semester), added_on=friend.added_on.strftime(r"%m/%d/%Y, %H:%M:%S"),
-            notes_sent=str(friend.notes_sent), notes_received=str(friend.notes_received), rem_fr=rem_fr)
+            notes_sent=str(friend.notes_sent), notes_received=str(friend.notes_received), rem_fr=rem_fr,
+            sent=sent, received=received)
+
         self._popup = Popup(title='Details', content=content, size_hint=(0.9, 0.9))
         self._popup.open()
 
@@ -179,6 +191,51 @@ class FriendDetails(FloatLayout):
     notes_sent = StringProperty()
     notes_received = StringProperty()
     rem_fr = ObjectProperty()
+    sent = ObjectProperty()
+    received = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_once(self.create_list)
+    
+    def on_tap(self, tile):
+        ind = self.ids.sl.index(tile)
+        print(ind)
+        # complete
+    
+    def create_list(self, *args):
+        sl = self.ids.sent
+        rl = self.ids.received
+        if len(self.sent) == 0:
+            item = OneLineListItem(
+                text='No Notes Sent Yet'
+            )
+            sl.add_widget(item)
+        if len(self.received) == 0:
+            item = OneLineListItem(
+                text='No Notes Received Yet'
+            )
+            rl.add_widget(item)
+        for each in self.sent:
+            item = TwoLineIconListItem(
+                text=each[0]+' From '+each[1],
+                secondary_text='On '+each[2].strftime(r"%m/%d/%Y, %H:%M:%S"),
+            )
+            icon = IconLeftWidget(
+                icon='note'
+            )
+            item.add_widget(icon)
+            sl.add_widget(item)
+        for each in self.received:
+            item = TwoLineIconListItem(
+                text=each[0]+' From '+each[1],
+                secondary_text='On '+each[2].strftime(r"%m/%d/%Y, %H:%M:%S"),
+            )
+            icon = IconLeftWidget(
+                icon='note'
+            )
+            item.add_widget(icon)
+            rl.add_widget(item)
 
 class Conformation(FloatLayout):
     name = StringProperty()
