@@ -1,9 +1,13 @@
 import os
 import sys
 from pathlib import Path
+import global_vars as gv
+from datetime import datetime
 
 from kivy.lang import Builder
 from kivymd.app import MDApp
+from kivy.core.window import Window
+from kivymd.utils import asynckivy
 # 
 
 # 
@@ -31,9 +35,6 @@ ScreenManager:
     RallyRegisterScreen:
         name: "rally register screen"
 
-    RallyRootScreen:
-        name: "rally root screen"
-
 """
 
 import dbconn
@@ -46,6 +47,7 @@ class MDRally(MDApp):
         self.icon = f"{os.environ['RALLY_ROOT']}/assets/images/logo.png"
 
     def build(self):
+        Window.bind(on_request_close=self.on_request_close)
         self.theme_cls.primary_palette = "Green"
         self.theme_cls.theme_style = "Dark"
         FONT_PATH = f"{os.environ['RALLY_ROOT']}/assets/fonts/"
@@ -89,6 +91,15 @@ class MDRally(MDApp):
             }
         )
         return Builder.load_string(KV)
+
+    def on_request_close(self, *args):
+        async def record_time():
+            if gv.user is not None:
+                await gv.put_last_active(datetime.now().strftime(r"%Y-%m-%d %H:%M:%S"))
+        asynckivy.start(record_time())
+        print('cleaning up...')
+        asynckivy.start(gv.clean_up())
+        self.stop()
 
 
 MDRally().run()

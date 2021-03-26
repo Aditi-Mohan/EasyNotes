@@ -4,6 +4,7 @@ from kivy.properties import StringProperty, ColorProperty, ObjectProperty, Numer
 from kivymd.uix.list import OneLineListItem, OneLineIconListItem, TwoLineIconListItem, IconLeftWidget, IconRightWidget
 from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivymd.utils import asynckivy
@@ -59,7 +60,7 @@ class SubjectScreen(MDScreen):
         for i in self.units:
             item = OneLineIconListItem(
                 text= i.unit_name,
-                on_release=self.show_notes,
+                on_touch_down=self.show_notes,
             )
             icon = IconLeftWidget(
                 icon="note",
@@ -86,22 +87,25 @@ class SubjectScreen(MDScreen):
 
     def add_unit(self, listitem):
         def add_unit_callback(name):
-            self.new_unit = name
-            asynckivy.start(gv.add_unit(self.new_unit, self.title, self.sub_id, gv.user.uid))
-            asynckivy.start(gv.get_units_for(gv.user.uid, self.sub_id, self.title))
-            self.units = gv.units[self.title]
-            item = OneLineIconListItem(
-                text= name,
-                on_release=self.show_notes,
-            )
-            icon = IconLeftWidget(
-                icon="note",
-                theme_text_color="Custom",
-                text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-            )
-            item.add_widget(icon)
-            self.ids.list_view.add_widget(item, 1)
-            self.unit_nos = str(int(self.unit_nos) + 1)
+            if name not in [x.unit_name for x in gv.units[self.title]]:
+                self.new_unit = name
+                asynckivy.start(gv.add_unit(self.new_unit, self.title, self.sub_id, gv.user.uid))
+                asynckivy.start(gv.get_units_for(gv.user.uid, self.sub_id, self.title))
+                self.units = gv.units[self.title]
+                item = OneLineIconListItem(
+                    text= name,
+                    on_touch_down=self.show_notes,
+                )
+                icon = IconLeftWidget(
+                    icon="note",
+                    theme_text_color="Custom",
+                    text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+                )
+                item.add_widget(icon)
+                self.ids.list_view.add_widget(item, 1)
+                self.unit_nos = str(int(self.unit_nos) + 1)
+            else:
+                print('Unit '+name+' already exists in '+self.title)
             self._popup.dismiss()
         content = AddUnitDialog(add_unit=add_unit_callback)
         self._popup = Popup(title='Add Unit', content=content, size_hint=(0.9, 0.9))
@@ -134,7 +138,7 @@ class SubjectScreen(MDScreen):
                 text = file_name,
                 secondary_text = 'On '+dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+'    '+str(num_of_bookmarks)+(' bookmarks' if num_of_bookmarks>1 else ' bookmark'),
                 bg_color=[40/255, 44/255, 64/255,1],
-                on_release = self.open_note,
+                on_touch_down = self.open_note,
             )
             icon = IconLeftWidget(
                 icon="subdirectory-arrow-right",
@@ -194,7 +198,7 @@ class SubjectScreen(MDScreen):
                 # print(self.ids.fl.children)
                 link = await write_transcript_with_bookmarks(file_name, transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
                 num_of_bookmarks = num_of_bookmarks
-                await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
+                await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks, 0)
                 self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks, unit_id)
 
             async def write_file_with_bm_and_frames(frames, transcript, num_of_bookmarks, frame_dir):
@@ -202,7 +206,7 @@ class SubjectScreen(MDScreen):
                 # print(self.ids.fl.children)
                 link = await write_transcript_with_frames_and_bookmarks(file_name, frames, transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
                 num_of_bookmarks = num_of_bookmarks
-                await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
+                await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks, 0)
                 print('Cache generated during conversion store at: '+frame_dir+'\n'+'You can delete this folder after process is complete')
                 # os.remove(frame_dir) # todo: figure out how to delete directory after done
                 self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks, unit_id)
@@ -251,74 +255,117 @@ class SubjectScreen(MDScreen):
 
         self._popup.dismiss()
         
-        content = SaveFile(finish=finish, go_to_bookmark=add_bookmarks, options=[x.unit_name for x in self.units])
+        content = SaveFile(finish=finish, go_to_bookmark=add_bookmarks, options=[x.unit_name for x in self.units], sub_name=self.title, sub_id=self.sub_id)
         self._popup = Popup(title='Save File', content=content, size_hint=(0.8,0.5))
         self._popup.open()
     
-    def show_notes(self, unittile):
-        if unittile.text in self.notes_shown:
-            # bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
-            ind = self.ids.list_view.children.index(unittile) - 1
-            while ind >= 1:
-                nt = self.ids.list_view.children[ind]
-                if type(nt) == type(OneLineIconListItem()):
-                    break
-                self.ids.list_view.remove_widget(nt)
-                ind -= 1
-            # self.ids.list_view.remove_widget(bxlay)
-            self.notes_shown.remove(unittile.text)
-        else:
-            unit = [x for x in self.units if x.unit_name == unittile.text][0]
-            if self.title in gv.notes.keys():
-                if unit.unit_name in gv.notes[self.title].keys():
-                    self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+    def show_notes(self, unittile, touch):
+        if unittile.collide_point(*touch.pos):
+            print('move')
+            if unittile.text in self.notes_shown:
+                # bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
+                ind = self.ids.list_view.children.index(unittile) - 1
+                while ind >= 1:
+                    nt = self.ids.list_view.children[ind]
+                    if type(nt) == type(OneLineIconListItem()):
+                        break
+                    self.ids.list_view.remove_widget(nt)
+                    ind -= 1
+                # self.ids.list_view.remove_widget(bxlay)
+                self.notes_shown.remove(unittile.text)
+            else:
+                unit = [x for x in self.units if x.unit_name == unittile.text][0]
+                if self.title in gv.notes.keys():
+                    if unit.unit_name in gv.notes[self.title].keys():
+                        self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
+                    else:
+                        asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit.unit_id, unit.unit_name, self.title))
+                        self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
                 else:
                     asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit.unit_id, unit.unit_name, self.title))
                     self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
-            else:
-                asynckivy.start(gv.get_notes_for(gv.user.uid, self.sub_id, unit.unit_id, unit.unit_name, self.title))
-                self.notes[unit.unit_name] = gv.notes[self.title][unit.unit_name]
-            if len(self.notes[unit.unit_name]) == 0:
-                self.ids.list_view.add_widget(
-                    OneLineListItem(
-                        text='No Notes For '+unittile.text,
-                        theme_text_color='Custom',
-                        text_color=[158/255, 160/255, 163/255, 1]
-                    ),
-                    self.ids.list_view.children.index(unittile)
-                )
-            else:
-                # new_list = MDList()
-                ind = self.ids.list_view.children.index(unittile)
-                for i in self.notes[unit.unit_name]:
-                    item = TwoLineIconListItem(
-                        text = i.note_title,
-                        secondary_text = 'On '+i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+"    "+str(i.num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
-                        bg_color=[40/255, 44/255, 64/255,1],
-                        on_release = self.open_note,
+                if len(self.notes[unit.unit_name]) == 0:
+                    self.ids.list_view.add_widget(
+                        OneLineListItem(
+                            text='No Notes For '+unittile.text,
+                            theme_text_color='Custom',
+                            text_color=[158/255, 160/255, 163/255, 1]
+                        ),
+                        self.ids.list_view.children.index(unittile)
                     )
-                    icon = IconLeftWidget(
-                        icon="subdirectory-arrow-right",
-                        theme_text_color="Custom",
-                        text_color=(self.color[0], self.color[1], self.color[2], 0.75),
-                    )
-                    item.add_widget(icon)
-                    self.ids.list_view.add_widget(item, ind)
-                    ind += 1
-                    # new_list.add_widget(item)
-                # bxlay = BoxLayout(padding=[15,0,0,0])
-                # bxlay.add_widget(new_list)
-                # self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
-            self.notes_shown.append(unittile.text)
+                else:
+                    # new_list = MDList()
+                    ind = self.ids.list_view.children.index(unittile)
+                    for i in self.notes[unit.unit_name]:
+                        item = TwoLineIconListItem(
+                            text = i.note_title,
+                            secondary_text = 'On '+i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+"    "+str(i.num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
+                            bg_color=[40/255, 44/255, 64/255,1],
+                            on_touch_down = self.open_note,
+                        )
+                        icon = IconLeftWidget(
+                            icon="subdirectory-arrow-right",
+                            theme_text_color="Custom",
+                            text_color=(self.color[0], self.color[1], self.color[2], 0.75),
+                        )
+                        item.add_widget(icon)
+                        self.ids.list_view.add_widget(item, ind)
+                        ind += 1
+                        # new_list.add_widget(item)
+                    # bxlay = BoxLayout(padding=[15,0,0,0])
+                    # bxlay.add_widget(new_list)
+                    # self.ids.list_view.add_widget(bxlay, self.ids.list_view.children.index(unittile))
+                self.notes_shown.append(unittile.text)
+            return True
     
-    def open_note(self, notetile):
-        # bxlay = notetile.parent.parent
-        unittiles = [x for x in self.ids.list_view.children 
-                        if type(x) == type(OneLineIconListItem()) and x.text in self.notes_shown 
-                        and self.ids.list_view.children.index(x) > self.ids.list_view.children.index(notetile)]
-        unit_name = unittiles[-1].text
-        print(unit_name)
-        note = [x for x in self.notes[unit_name] if x.note_title == notetile.text][0]
-        webbrowser.open(note.link)
+    def open_note(self, notetile, touch):
+        if notetile.collide_point(*touch.pos):
+            print(touch.button)
+            unittiles = [x for x in self.ids.list_view.children 
+                if type(x) == type(OneLineIconListItem()) and x.text in self.notes_shown 
+                and self.ids.list_view.children.index(x) > self.ids.list_view.children.index(notetile)]
+            # print([x.text for x in unittiles])
+            unit_name = unittiles[0].text
+            print(unit_name)
+            note = [x for x in self.notes[unit_name] if x.note_title == notetile.text][0]
+            if touch.button == 'left':
+                # bxlay = notetile.parent.parent
+                webbrowser.open(note.link)
+            if touch.button == 'right':
+                def share_callback():
+                    async def send_share_req(fid):
+                        print('sending request...')
+                        dt = datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
+                        await gv.send_share_req(fid, note.note_id, self.title, unit_name, dt, note.note_title)
+                        self._popup.dismiss()
+
+                    content = ShareInfoPopup(note_id=note.note_id, send_share=send_share_req)
+                    self._popup.dismiss()
+                    self._popup = Popup(title='Share Information', content=content, size_hint=(0.5, 0.5))
+                    self._popup.open()
+                content=OptionsPopup(share=share_callback)
+                self._popup = Popup(title='Options', content=content, size_hint=(0.2, 0.3), pos=touch.pos)
+                self._popup.open()
+            return True
     
     # def open_unit(self, unittile):
+
+class OptionsPopup(FloatLayout):
+    share = ObjectProperty()
+    delete = ObjectProperty()
+    pass
+
+class ShareInfoPopup(FloatLayout):
+    note_id = NumericProperty()
+    send_share = ObjectProperty()
+
+    def send_share_callback(self):
+        fid = self.ids.fid.text
+        if fid.isdecimal():
+            is_fid_friend = False
+            async def validate_req():
+                nonlocal is_fid_friend
+                is_fid_friend = await gv.check_if_fid_friend(int(fid), self.note_id)
+            asynckivy.start(validate_req())
+            if is_fid_friend:
+                asynckivy.start(self.send_share(int(fid)))
