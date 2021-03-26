@@ -325,6 +325,7 @@ class SubjectScreen(MDScreen):
                 if type(x) == type(OneLineIconListItem()) and x.text in self.notes_shown 
                 and self.ids.list_view.children.index(x) > self.ids.list_view.children.index(notetile)]
             # print([x.text for x in unittiles])
+            unittile = unittiles[0]
             unit_name = unittiles[0].text
             print(unit_name)
             note = [x for x in self.notes[unit_name] if x.note_title == notetile.text][0]
@@ -343,7 +344,33 @@ class SubjectScreen(MDScreen):
                     self._popup.dismiss()
                     self._popup = Popup(title='Share Information', content=content, size_hint=(0.5, 0.5))
                     self._popup.open()
-                content=OptionsPopup(share=share_callback)
+                
+                def delete_callback():
+                    async def confirm_deletion(opt):
+                        if opt == 'yes':
+                            print('in')
+                            deleted = await gv.delete_note(note.note_id)
+                            if deleted:
+                                del gv.notes[self.title][unit_name]
+                                # bxlay = self.ids.list_view.children[self.ids.list_view.children.index(unittile)-1]
+                                ind = self.ids.list_view.children.index(unittile) - 1
+                                while ind >= 1:
+                                    nt = self.ids.list_view.children[ind]
+                                    if type(nt) == type(OneLineIconListItem()):
+                                        break
+                                    self.ids.list_view.remove_widget(nt)
+                                    ind -= 1
+                                # self.ids.list_view.remove_widget(bxlay)
+                                self.notes_shown.remove(unittile.text)
+                        else:
+                            print('cancelled')
+                        self._popup.dismiss()
+                    
+                    content = Confirmation(delete=confirm_deletion)
+                    self._popup.dismiss()
+                    self._popup = Popup(title='Confirm', content=content, size_hint=(0.5, 0.3))
+                    self._popup.open()
+                content=OptionsPopup(share=share_callback, delete=delete_callback)
                 self._popup = Popup(title='Options', content=content, size_hint=(0.2, 0.3), pos=touch.pos)
                 self._popup.open()
             return True
@@ -353,11 +380,11 @@ class SubjectScreen(MDScreen):
 class OptionsPopup(FloatLayout):
     share = ObjectProperty()
     delete = ObjectProperty()
-    pass
 
 class ShareInfoPopup(FloatLayout):
     note_id = NumericProperty()
     send_share = ObjectProperty()
+    delete = ObjectProperty()
 
     def send_share_callback(self):
         fid = self.ids.fid.text
@@ -369,3 +396,9 @@ class ShareInfoPopup(FloatLayout):
             asynckivy.start(validate_req())
             if is_fid_friend:
                 asynckivy.start(self.send_share(int(fid)))
+
+class Confirmation(FloatLayout):
+    delete = ObjectProperty()
+    
+    def delete_callback(self, opt):
+        asynckivy.start(self.delete(opt))
