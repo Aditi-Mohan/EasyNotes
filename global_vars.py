@@ -1,3 +1,4 @@
+from models.user import User
 from models.subject import Subject
 from models.note import Note
 from models.units import Units
@@ -11,6 +12,7 @@ from datetime import datetime
 from functions.write_transcript_to_notion import add_subpage_to_notion, add_unitpage_to_notion, verify_token
 
 user = None
+newuser = None
 subjects = []
 notes = {}
 units = {}
@@ -57,16 +59,16 @@ async def get_notes_for(uid, sub_id, unit_id, unit_name, sub_name):
         notes[sub_name] = {unit_name: nt}
     print(notes)
 
-async def add_user(name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login):
-    token_valid = await verify_token(token)
-    if token_valid:
-        url_valid = await verify_homepage_url(homepage_url)
-        if url_valid:
-            # verify email
-            q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-            params = (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login)
-            db.mycursor.execute(q, params)
-            db.mydb.commit()
+# async def add_user(name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login):
+#     token_valid = await verify_token(token)
+#     if token_valid:
+#         url_valid = await verify_homepage_url(homepage_url)
+#         if url_valid:
+#             # verify email
+#             q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+#             params = (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login)
+#             db.mycursor.execute(q, params)
+#             db.mydb.commit()
 
 async def add_subject(name, uid, fac_name, color):
     link = await add_subpage_to_notion(user.token, user.homepage_url, name)
@@ -429,6 +431,41 @@ async def get_nbm(note_id):
     db.mycursor.execute(q, params)
     res = db.mycursor.fetchall()
     return res[0][0]
+
+async def delete_subject():
+    return
+
+async def delete_unit():
+    return
+
+async def delete_note(note_id):
+    q = 'select * from share_request where note_id=%s'
+    params = (note_id,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if len(res) > 0:
+        print('Tnere is a pending request for this note, You can\'t delete this note until the request is accepted or rejected')
+    else:
+        q = 'select note_id from notes where shared_from=%s'
+        params = (note_id,)
+        db.mycursor.execute(q, params)
+        res = db.mycursor.fetchall()
+        if len(res) > 0:
+            print('changin ownership of a few notes...')
+            for each in res:
+                q = 'update notes set shared_from=0 where note_id=%s'
+                params = (each[0],)
+                db.mycursor.execute(q, params)
+            db.mydb.commit()
+        print('deleting...')
+        q = 'delete from notes where uid=%s and note_id=%s'
+        params = (user.uid, note_id)
+        db.mycursor.execute(q, params)
+        db.mydb.commit()
+        return True
+    return False
+    # shared notes cannot be deleted - or - delete abd remove shared from as well so that the other use now has ownership
+
 # async def get_share_note_info(note_id):
 #     q = 'select s.req_from, u.name, u.college, u.course, u.semester, s.note_id, s.note_title, s.sub_name, s.unit_name, s.sent_on from share_request s inner join user u on u.uid=s.req_from where s.req_to=%s and s.note_id=%s'
 #     params = (user.uid, note_id)
@@ -440,3 +477,23 @@ async def get_nbm(note_id):
 #     if len(friends) == 0:
 #         fr = [x for x in friends if x.friend_id == fid][0]
 #     return fr.name
+
+async def check_username(nm):
+    q = 'select name from user'
+    db.mycursor.execute(q)
+    res = db.mycursor.fetchall()
+    if nm in [x[0] for x in res]:
+        return False
+    return True
+
+async def create_user():
+    q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+    params = (newuser.name, newuser.email, newuser.college, newuser.course, newuser.semester, 0, newuser.token, newuser.homepage_url, newuser.password, newuser.last_login.strftime(r"%Y-%m-%d %H:%M:%S"))
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'select * from user where uid = any( SELECT LAST_INSERT_ID());'
+    db.mycursor.execute(q)
+    res = db.mycursor.fetchall()
+    print(res)
+    global user
+    user = User(*res[0])

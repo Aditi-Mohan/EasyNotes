@@ -2,7 +2,7 @@
 #: import gch kivy.utils.get_color_from_hex
 
 
-<RallyRegisterScreen>
+<SignUpScreen>
     canvas:
         Color:
             rgba: gch("33333d")
@@ -18,10 +18,6 @@
         padding: dp(30)
         pos_hint: {"center_x": .5}
 
-	    Image:
-            source: f"{environ['RALLY_ROOT']}/assets/images/logo.png"
-            pos_hint: {"center_x": .5}
-            size_hint: None, None
 
 	    MDBoxLayout:
 	        adaptive_height: True
@@ -32,29 +28,43 @@
 				id: nm
 				focus: True
 	            hint_text: "Username"
-
-	        RallyTextField:
+			
+			RallyTextField:
+				id: em
+				focus: True
+	            hint_text: "Email"
+			
+			RallyTextField:
 				id: pw
 	            hint_text: "Password"
 	            password: True
 	            password_mask: "*"
-			
+
+	        RallyTextField:
+				id: cpw
+	            hint_text: "Confirm Password"
+	            password: True
+	            password_mask: "*"
+
 			MDFillRoundFlatButton:
-				text: "Log In"
+				text: "Continue"
 				font_size: 18
 				text_color: 1, 1, 1, 1
-				on_release: root.login(root.ids.nm.text, root.ids.pw.text)
+				on_release:
+					if root.validate(): \
+					root.parent.current = "rally signup2 screen"  
 
 	    MDBoxLayout:
 	        adaptive_height: True
 	        orientation: "vertical"
-	        spacing: dp(0)
+	        spacing: dp(5)
+
 
 	        MDTextButton:
-	        	text: "or Sign Up"
-				font_size: 20
+	        	text: "Already have an account? Log In"
 	        	pos_hint: {"center_x": .5}
-				on_release: root.parent.current = "rally signup screen"
+				on_release: root.parent.current = "rally register screen"
+
 
 <RallyTextField@MDTextField>
     mode: 'fill'

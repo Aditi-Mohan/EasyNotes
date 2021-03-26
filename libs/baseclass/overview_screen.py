@@ -130,6 +130,7 @@ class RallyOverviewScreen(MDScreen):
                 newlink = await copy_page(gv.user.token, gv.user.homepage_url, sub_name, unit_name, title, token_v2, homepage_url, share_req.sub_name, share_req.unit_name, share_req.note_title, dt.strftime(r"%m/%d/%Y, %H:%M:%S"))
                 print(newlink)
                 await gv.accept_share_request(sub_id, gv.user.uid, unit_id, title, dt.strftime(r"%Y-%m-%d %H:%M:%S"), newlink, nbm, share_req.note_id, share_req.sent_on, share_req.req_from, share_req.note_title)
+                await gv.get_notes_for(gv.user.uid, sub_id, unit_id, unit_name, sub_name)
                 self._popup.dismiss()
                 self.on_pre_enter()
 

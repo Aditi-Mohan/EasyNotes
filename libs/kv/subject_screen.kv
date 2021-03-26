@@ -103,3 +103,20 @@
             text: 'DONE'
             pos_hint: {'x': 0.95, 'y': 0.8}
 	    	on_press: root.send_share_callback()
+
+<Confirmation>:
+    FloatLayout:
+        Label:
+            text: 'Are You Sure?'
+            font_size: 28
+            pos_hint: {'x': 0.55, 'y': 2.1}
+        
+        MDFillRoundFlatButton:
+            text: 'CANCEL'
+            pos_hint: {'x': 0.75, 'y': 1.9}
+	    	on_press: root.delete_callback('no')
+
+        MDFillRoundFlatButton:
+            text: 'PROCEED'
+            pos_hint: {'x': 1.1, 'y': 1.9}
+	    	on_press: root.delete_callback('yes')

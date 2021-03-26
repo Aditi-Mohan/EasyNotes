@@ -26,15 +26,20 @@ for kv_file in os.listdir(KV_DIR):
 KV = """
 #:import FadeTransition kivy.uix.screenmanager.FadeTransition
 #:import RallyRegisterScreen libs.baseclass.register_screen.RallyRegisterScreen
-#:import RallyRootScreen libs.baseclass.root_screen.RallyRootScreen
-
+#:import SignUpScreen libs.baseclass.signup_screen.SignUpScreen
+#:import SignUp2Screen libs.baseclass.signup2_screen.SignUp2Screen
+#:import SignUp3Screen libs.baseclass.signup3_screen.SignUp3Screen
 ScreenManager:
     id: 'scr_manager'
     transition: FadeTransition()
-
     RallyRegisterScreen:
         name: "rally register screen"
-
+    SignUpScreen:
+        name: "rally signup screen"
+    SignUp2Screen:
+        name: "rally signup2 screen"
+    SignUp3Screen:
+        name: "rally signup3 screen"
 """
 
 import dbconn

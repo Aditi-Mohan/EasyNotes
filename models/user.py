@@ -29,6 +29,9 @@ class User:
         self.token = token
         self.homepage_url = homepage_url
         self.last_login = last_login # datetime.strptime(last_login, r'%Y-%m-%d %H:%M:%S')
+    
+def create_new_user():
+    return User(None, None, None, None, None, None, None, None, None, None, None)
 
 # relations partiipating in - 
 # friends -> many to many
