@@ -7,7 +7,7 @@ import asyncio
 
 # from libs.baseclass.root_screen import RallyRootScreen
 
-class RallyRegisterScreen(MDScreen):
+class SignUp3Screen(MDScreen):
     # pass
     def login(self,name, passw):
         return

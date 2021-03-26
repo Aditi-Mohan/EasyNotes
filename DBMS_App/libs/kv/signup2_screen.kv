@@ -1,0 +1,61 @@
+#: import environ os.environ
+#: import gch kivy.utils.get_color_from_hex
+
+
+<SignUp2Screen>
+    canvas:
+        Color:
+            rgba: gch("33333d")
+            # rgba: gch("191414")
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    MDBoxLayout:
+        adaptive_height: True
+        orientation: "vertical"
+        spacing: dp(80)
+        padding: dp(30)
+        pos_hint: {"center_x": .5}
+
+		
+	    MDBoxLayout:
+	        adaptive_height: True
+	        orientation: "vertical"
+	        spacing: dp(20)
+
+			RallyTextField:
+				id: clg
+				focus: True
+	            hint_text: "College"
+
+			RallyTextField:
+				id: crs
+				focus: True
+	            hint_text: "Course"
+
+			RallyTextField:
+				id: sm
+				focus: True
+	            hint_text: "Semester"
+				
+			MDFlatButton:
+				text: 'Continue'
+				on_release: root.parent.current = "rally signup3 screen"
+
+	    MDBoxLayout:
+	        adaptive_height: True
+	        orientation: "vertical"
+	        spacing: dp(20)
+
+
+	        MDTextButton:
+	        	text: "Already have an account? Log In"
+	        	pos_hint: {"center_x": .5}
+				on_release: root.parent.current = "rally register screen"
+
+
+<RallyTextField@MDTextField>
+    mode: 'fill'
+    line_anim: False
+    fill_color: (0, 0, 0, .4)
