@@ -324,7 +324,8 @@ class SubjectScreen(MDScreen):
             unittiles = [x for x in self.ids.list_view.children 
                 if type(x) == type(OneLineIconListItem()) and x.text in self.notes_shown 
                 and self.ids.list_view.children.index(x) > self.ids.list_view.children.index(notetile)]
-            unit_name = unittiles[-1].text
+            # print([x.text for x in unittiles])
+            unit_name = unittiles[0].text
             print(unit_name)
             note = [x for x in self.notes[unit_name] if x.note_title == notetile.text][0]
             if touch.button == 'left':

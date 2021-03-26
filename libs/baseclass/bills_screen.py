@@ -12,6 +12,7 @@ from kivy.clock import Clock
 
 import global_vars as gv
 from datetime import datetime
+import webbrowser
 
 
 class RallyBillsScreen(MDScreen):
@@ -198,11 +199,16 @@ class FriendDetails(FloatLayout):
         super().__init__(**kwargs)
         Clock.schedule_once(self.create_list)
     
-    def on_tap(self, tile):
-        ind = self.ids.sl.index(tile)
-        print(ind)
-        # complete
-    
+    def on_tap_r(self, tile):
+        ind = self.ids.received.children.index(tile)
+        sn = self.received[len(self.received) - 1 - ind]
+        webbrowser.open(sn[3])
+
+    def on_tap_s(self, tile):
+        ind = self.ids.sent.children.index(tile)
+        rn = self.sent[len(self.sent) - 1 - ind]
+        webbrowser.open(rn[3])
+
     def create_list(self, *args):
         sl = self.ids.sent
         rl = self.ids.received
@@ -218,8 +224,9 @@ class FriendDetails(FloatLayout):
             rl.add_widget(item)
         for each in self.sent:
             item = TwoLineIconListItem(
-                text=each[0]+' From '+each[1],
+                text=each[0],
                 secondary_text='On '+each[2].strftime(r"%m/%d/%Y, %H:%M:%S"),
+                on_release=self.on_tap_s,
             )
             icon = IconLeftWidget(
                 icon='note'
@@ -227,9 +234,11 @@ class FriendDetails(FloatLayout):
             item.add_widget(icon)
             sl.add_widget(item)
         for each in self.received:
+            print(each[1])
             item = TwoLineIconListItem(
                 text=each[0]+' From '+each[1],
                 secondary_text='On '+each[2].strftime(r"%m/%d/%Y, %H:%M:%S"),
+                on_release=self.on_tap_r
             )
             icon = IconLeftWidget(
                 icon='note'

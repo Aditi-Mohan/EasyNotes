@@ -296,7 +296,21 @@ async def check_if_fid_friend(fid, note_id):
         db.mycursor.execute(q, params)
         res = db.mycursor.fetchall()
         if len(res) == 0:
-            return True
+            q = 'select * from notes where uid=%s and shared_from=%s'
+            params = (fid, note_id)
+            db.mycursor.execute(q, params)
+            res = db.mycursor.fetchall()
+            if len(res) == 0:
+                q = 'select * from notes where uid=%s and note_id=%s and shared_from = any(select note_id from notes where uid=%s);'
+                params = (user.uid, note_id, fid)
+                db.mycursor.execute(q, params)
+                res = db.mycursor.fetchall()
+                if len(res) == 0:
+                    return True
+                else:
+                    print('This note was sent to you by this user')
+            else:
+                print('already sent this note to this user')
         else:
             print('already sent shared request for this note to this user')
 
@@ -310,7 +324,10 @@ async def send_share_req(req_to, note_id, sub_name, unit_name, sent_on, note_tit
     params = (req_to, notif_title, sent_on)
     db.mycursor.execute(q, params)
     db.mydb.commit()
-
+    q = 'update friends set last_interaction=%s where (user1=%s and user2=%s) or (user1=%s and user2=%s)'
+    params = (sent_on, user.uid, req_to, req_to, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
 
 async def get_pending_shares():
     q = 'select req_from, note_id, sub_name, unit_name, sent_on, note_title, friend_name from share_request where req_to=%s'
@@ -363,16 +380,33 @@ async def accept_share_request(sub_id, uid, unit_id, title, dt_of_creation, link
     count += 1
     print(count)
     if is_user1:
-        q = 'update friends set notes_received=%s where user1=%s and user2=%s'
-        params = (count, user.uid, fid)
+        q = 'update friends set notes_received=%s, last_interaction=%s where user1=%s and user2=%s'
+        params = (count, dt_of_creation, user.uid, fid)
         db.mycursor.execute(q, params)
         db.mydb.commit()
     else:
-        q = 'update friends set notes_sent=%s where user1=%s and user2=%s'
-        params = (count, user.uid, fid)
+        q = 'update friends set notes_sent=%s, last_interaction=%s where user1=%s and user2=%s'
+        params = (count, dt_of_creation, user.uid, fid)
         db.mycursor.execute(q, params)
         db.mydb.commit()
-    
+
+async def reject_share_req(fid, dt, shared_from, og_title, dt1):
+    # delete from share_request and notification
+    q = 'delete from notifications where notif_for=%s and dt=%s'
+    params = (user.uid, dt)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'delete from share_request where req_to=%s and req_from=%s and note_id=%s'
+    params = (user.uid, fid, shared_from)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    # send rejection notification
+    q = 'insert into notifications values(%s, %s, %s)'
+    notif_title = user.name+' Rejected Share Request for '+og_title
+    params = (fid, notif_title, dt1)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
 async def get_list_of_subs_and_units():
     if len(subjects) == 0:
         await get_subs(user.uid)

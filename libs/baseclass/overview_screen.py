@@ -138,9 +138,10 @@ class RallyOverviewScreen(MDScreen):
             self._popup.open()
 
         async def reject_sr():
+            dt = datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
+            await gv.reject_share_req(share_req.req_from, share_req.sent_on, share_req.note_id, share_req.note_title, dt)
             self._popup.dismiss()
             self.on_pre_enter()
-            return
 
         content = ShareRequestInfo(share_req=share_req, sent_on=dt, accept_callback=accept_sr, reject_callback=reject_sr)
         self._popup = Popup(title='Share Request', content=content, size_hint=(0.5, 0.5))
