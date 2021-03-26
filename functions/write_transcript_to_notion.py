@@ -167,3 +167,11 @@ def _copy_properties(old, new):
             new_child = new.children.add_new(old_child.__class__)
             _copy_properties(old_child, new_child)
 
+async def validate_token_and_url(token_v2, url):
+    try:
+        client = NotionClient(token_v2=token_v2)
+        block = client.get_block(url)
+        return True
+    except:
+        print('Token or Url not valid')
+        return False

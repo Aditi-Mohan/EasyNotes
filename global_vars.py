@@ -1,3 +1,4 @@
+from models.user import User
 from models.subject import Subject
 from models.note import Note
 from models.units import Units
@@ -11,6 +12,7 @@ from datetime import datetime
 from functions.write_transcript_to_notion import add_subpage_to_notion, add_unitpage_to_notion, verify_token
 
 user = None
+newuser = None
 subjects = []
 notes = {}
 units = {}
@@ -57,16 +59,16 @@ async def get_notes_for(uid, sub_id, unit_id, unit_name, sub_name):
         notes[sub_name] = {unit_name: nt}
     print(notes)
 
-async def add_user(name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login):
-    token_valid = await verify_token(token)
-    if token_valid:
-        url_valid = await verify_homepage_url(homepage_url)
-        if url_valid:
-            # verify email
-            q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-            params = (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login)
-            db.mycursor.execute(q, params)
-            db.mydb.commit()
+# async def add_user(name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login):
+#     token_valid = await verify_token(token)
+#     if token_valid:
+#         url_valid = await verify_homepage_url(homepage_url)
+#         if url_valid:
+#             # verify email
+#             q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+#             params = (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login)
+#             db.mycursor.execute(q, params)
+#             db.mydb.commit()
 
 async def add_subject(name, uid, fac_name, color):
     link = await add_subpage_to_notion(user.token, user.homepage_url, name)
@@ -475,3 +477,23 @@ async def delete_note(note_id):
 #     if len(friends) == 0:
 #         fr = [x for x in friends if x.friend_id == fid][0]
 #     return fr.name
+
+async def check_username(nm):
+    q = 'select name from user'
+    db.mycursor.execute(q)
+    res = db.mycursor.fetchall()
+    if nm in [x[0] for x in res]:
+        return False
+    return True
+
+async def create_user():
+    q = 'insert into user (name, email, college, course, semester, total_sessions, token, homepage_url, password, last_login) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+    params = (newuser.name, newuser.email, newuser.college, newuser.course, newuser.semester, 0, newuser.token, newuser.homepage_url, newuser.password, newuser.last_login.strftime(r"%Y-%m-%d %H:%M:%S"))
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    q = 'select * from user where uid = any( SELECT LAST_INSERT_ID());'
+    db.mycursor.execute(q)
+    res = db.mycursor.fetchall()
+    print(res)
+    global user
+    user = User(*res[0])
