@@ -435,8 +435,14 @@ async def get_nbm(note_id):
 async def delete_subject():
     return
 
-async def delete_unit():
-    return
+# async def delete_unit(unit_id):
+#     q = 'select note_id from notes where unit_id=%s'
+#     params = (unit_id,)
+#     db.mycursor.execute(q, params)
+#     res = db.mycursor.fetchall()
+#     for each in res:
+
+#     return
 
 async def delete_note(note_id):
     q = 'select * from share_request where note_id=%s'

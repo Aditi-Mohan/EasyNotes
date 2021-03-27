@@ -58,7 +58,7 @@
                 line_color: root.color
                 icon_color: (1, 1, 1, 1)
                 md_bg_color: root.btn_color
-                pos: self.parent.width-self.width-20, self.height+25
+                pos: self.parent.width-self.width-20, (2*self.height)+35
                 on_release: root.upload('video')
             
             MDRoundFlatIconButton:
@@ -70,8 +70,21 @@
                 line_color: root.color
                 icon_color: (1, 1, 1, 1)
                 md_bg_color: root.btn_color
-                pos: self.parent.width-self.width-20, 15
+                pos: self.parent.width-self.width-20, self.height+25
                 on_release: root.upload('audio')
+
+            MDRoundFlatIconButton:
+                icon: 'note-plus'
+                text: 'Upload Note'
+                font_size: 16
+                theme_text_color: "Custom"
+                text_color: (1, 1, 1, 1)
+                line_color: root.color
+                icon_color: (1, 1, 1, 1)
+                md_bg_color: root.btn_color
+                pos: self.parent.width-self.width-20, 15
+                on_release: root.upload_link()
+
 
 <OptionsPopup>:
     BoxLayout:
@@ -120,3 +133,17 @@
             text: 'PROCEED'
             pos_hint: {'x': 1.1, 'y': 1.9}
 	    	on_press: root.delete_callback('yes')
+
+<UploadLinkPopup>:
+    FloatLayout:
+
+        RallyTextField:
+            id: link
+            size_hint_x: 0.95
+            pos_hint: {'x': 0.4, 'y': 1.0}
+            hint_text: 'Enter Notion Page Link'
+        
+        MDFillRoundFlatButton:
+            text: 'ADD'
+            pos_hint: {'x': 0.775, 'y': 0.6}
+	    	#on_release: root.delete_callback('yes')

@@ -375,7 +375,11 @@ class SubjectScreen(MDScreen):
                 self._popup.open()
             return True
     
-    # def open_unit(self, unittile):
+    def upload_link(self):
+        content = UploadLinkPopup()
+        self._popup = Popup(title='Upload Note', content=content, size_hint=(0.6, 0.6))
+        self._popup.open()
+
 
 class OptionsPopup(FloatLayout):
     share = ObjectProperty()
@@ -402,3 +406,6 @@ class Confirmation(FloatLayout):
     
     def delete_callback(self, opt):
         asynckivy.start(self.delete(opt))
+
+class UploadLinkPopup(FloatLayout):
+    pass
