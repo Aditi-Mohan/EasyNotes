@@ -10,6 +10,7 @@ from kivy.uix.label import Label
 from kivymd.utils import asynckivy
 from kivy.core.audio import SoundLoader
 from kivy.uix.videoplayer import VideoPlayer
+from kivy.core.clipboard import Clipboard
 
 from libs.baseclass.root_screen import RallyRootScreen
 from libs.baseclass.add_unit_dialog import AddUnitDialog
@@ -344,7 +345,7 @@ class SubjectScreen(MDScreen):
                         await gv.send_share_req(fid, note.note_id, self.title, unit_name, dt, note.note_title)
                         self._popup.dismiss()
 
-                    content = ShareInfoPopup(note_id=note.note_id, send_share=send_share_req)
+                    content = ShareInfoPopup(note_id=note.note_id, send_share=send_share_req, link=note.link)
                     self._popup.dismiss()
                     self._popup = Popup(title='Share Information', content=content, size_hint=(0.5, 0.5))
                     self._popup.open()
@@ -417,6 +418,7 @@ class ShareInfoPopup(FloatLayout):
     note_id = NumericProperty()
     send_share = ObjectProperty()
     delete = ObjectProperty()
+    link = StringProperty()
 
     def send_share_callback(self):
         fid = self.ids.fid.text
