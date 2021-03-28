@@ -11,6 +11,8 @@
             pos: self.pos
             size: self.size
 
+
+
     MDBoxLayout:
         adaptive_height: True
         orientation: "vertical"
@@ -18,22 +20,24 @@
         padding: dp(30)
         pos_hint: {"center_x": .5}
 
-		Image:
-        	source: f"{environ['RALLY_ROOT']}/assets/images/token.jpg"
-        	pos_hint: {"center_x": .5}
-            size_hint: None, None
-			width: 1500
-    		allow_stretch: True
+		
 
 	    MDBoxLayout:
 	        adaptive_height: True
 	        orientation: "vertical"
 	        spacing: dp(20)
 
+			Image:
+				source: f"{environ['RALLY_ROOT']}/assets/images/stepsToken.png"
+				size_hint_y: None  
+				height: dp(600)
+				
+
 	        RallyTextField:
 				id: nm
 				focus: True
 	            hint_text: "Token"
+
 
 			RallyTextField:
 				id: em
