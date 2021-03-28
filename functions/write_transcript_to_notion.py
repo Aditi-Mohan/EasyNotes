@@ -175,3 +175,23 @@ async def validate_token_and_url(token_v2, url):
     except:
         print('Token or Url not valid')
         return False
+
+async def validate_page(token_v2, link):
+    client = NotionClient(token_v2=token_v2)
+    try:
+        page = client.get_block(link)
+        return True
+    except:
+        print('Link not Valid, Make sure the Page is not a Subpage and is directly accessible')
+        return False
+
+async def create_page_from_link(link, token_v2, homepage_url, sub_name, unit_name, title, dt):
+    client = NotionClient(token_v2=token_v2)
+    homepage = client.get_block(homepage_url)
+    sub_page = get_doc(homepage, sub_name)
+    unit_page = get_doc(sub_page, unit_name)
+    new_page = unit_page.children.add_new(PageBlock)
+    old_page = client.get_block(link)
+    _copy_properties(old_page, new_page)
+    new_page.title = title
+    return new_page.get_browseable_url()

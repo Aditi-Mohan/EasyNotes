@@ -11,6 +11,7 @@ class SaveFile(BoxLayout):
     go_to_bookmark = ObjectProperty()
     options = ListProperty()
     unit = None
+    disable_bm = ObjectProperty(False)
 
     def pre_save(self, btn):
         if self.ids.file_name.text != '' and self.unit is not None:
@@ -28,7 +29,7 @@ class SaveFile(BoxLayout):
                             print('Note with the same name Already Exists in this Unit')
                             return
                 unit_id = [x for x in gv.units[self.sub_name] if x.unit_name == self.unit][0].unit_id
-                await gv.get_notes_for(gv.user.uid, sub_id, unit_id, self.unit, self.sub_name)
+                await gv.get_notes_for(gv.user.uid, self.sub_id, unit_id, self.unit, self.sub_name)
                 if self.file_name not in [x.note_title for x in gv.notes[self.sub_name][self.unit]]:
                     al_exists = False    
                 else:

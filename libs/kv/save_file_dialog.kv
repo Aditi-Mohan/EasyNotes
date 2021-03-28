@@ -17,13 +17,14 @@
             pos_hint: {'x': 0.1, 'y': 0.55}
 
         MDFillRoundFlatIconButton:
-            icon: 'arrow-right'
+            icon: 'check'
             text: 'Finish'
-            pos: self.parent.size[0]*0.5, self.parent.size[1]*0.9
+            pos: self.parent.size[0]*0.4, self.parent.size[1]*0.9
             on_release: root.pre_save('save')
 
         MDFillRoundFlatIconButton:
-            icon: 'arrow-right'
-            text: 'Next'
+            icon: 'bookmark-plus'
+            text: 'Next  '
+            disabled: root.disable_bm
             pos: self.parent.size[0]*0.7, self.parent.size[1]*0.9
             on_release: root.pre_save('next')

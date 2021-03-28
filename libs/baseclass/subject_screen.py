@@ -17,7 +17,7 @@ from libs.baseclass.file_chooser import ChooseFile
 from libs.baseclass.save_file_dialog import SaveFile
 from libs.baseclass.bookmark import Bookmark
 from functions.ibmspeechtotext import generate_transcript
-from functions.write_transcript_to_notion import write_transcript, write_transcript_with_bookmarks, write_transcript_with_frames_and_bookmarks
+from functions.write_transcript_to_notion import write_transcript, write_transcript_with_bookmarks, write_transcript_with_frames_and_bookmarks, validate_page, create_page_from_link
 from functions.audio_from_video import audio_from_video
 import utils.file_extensions as fe
 import global_vars as gv
@@ -132,7 +132,7 @@ class SubjectScreen(MDScreen):
         if unit_name in self.notes_shown:
             unittiles = [x for x in self.ids.list_view.children if type(x) == type(OneLineIconListItem())]
             unittile = [x for x in unittiles if x.text == unit_name][0]
-            ind = self.ids.list_view.children.index(unittile) - 1
+            ind = self.ids.list_view.children.index(unittile)
 
             item = TwoLineIconListItem(
                 text = file_name,
@@ -238,8 +238,12 @@ class SubjectScreen(MDScreen):
             self._popup.open()
         
         async def write_file():
+            file_name = self._popup.content.file_name
+            unit_name = self._popup.content.unit
+            unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
+            dt_of_creation = datetime.now()
             link = await write_transcript(file_name, self.new_transcript, gv.user.token, gv.user.homepage_url, self.title, unit_name, dt_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S"))
-            await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks)
+            await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks, 0)
 
         async def process_file():
             if(self.file_type == 'audio'):
@@ -375,7 +379,35 @@ class SubjectScreen(MDScreen):
                 self._popup.open()
             return True
     
-    # def open_unit(self, unittile):
+    def upload_link(self):
+
+        def create_note_from_link():
+            old_link = self._popup.content.link
+            self._popup.dismiss()
+
+            def finish_callback():
+                file_name = self._popup.content.file_name
+                unit_name = self._popup.content.unit
+                unit_id = [x for x in gv.units[self.title] if x.unit_name == unit_name][0].unit_id
+                dt_of_creation = datetime.now()
+                num_of_bookmarks = 0
+                
+                async def process():
+                    self._popup.dismiss()
+                    # print(self.ids.fl.children)
+                    link = await create_page_from_link(old_link, gv.user.token, gv.user.homepage_url, self.title, unit_name, file_name, dt_of_creation)
+                    await gv.add_note(self.sub_id, gv.user.uid, unit_id, file_name, dt_of_creation.strftime(r"%Y-%m-%d %H:%M:%S"), link, num_of_bookmarks, 0)
+                asynckivy.start(process())
+                self.update_ui(file_name, unit_name, dt_of_creation, num_of_bookmarks, unit_id)
+            
+            content = SaveFile(finish=finish_callback, options=[x.unit_name for x in self.units], sub_name=self.title, sub_id=self.sub_id, disable_bm=True)
+            self._popup = Popup(title='Save File', content=content, size_hint=(0.8,0.5))
+            self._popup.open()
+
+        content = UploadLinkPopup(finish_callback=create_note_from_link)
+        self._popup = Popup(title='Upload Note', content=content, size_hint=(0.6, 0.6))
+        self._popup.open()
+
 
 class OptionsPopup(FloatLayout):
     share = ObjectProperty()
@@ -402,3 +434,19 @@ class Confirmation(FloatLayout):
     
     def delete_callback(self, opt):
         asynckivy.start(self.delete(opt))
+
+class UploadLinkPopup(FloatLayout):
+    finish_callback = ObjectProperty()
+    link = StringProperty()
+
+    def validate(self):
+        link = self.ids.link.text
+        valid = False
+        async def link_valid():
+            nonlocal valid
+            valid = await validate_page(gv.user.token, link)
+        asynckivy.start(link_valid())
+        if valid:
+            self.link = self.ids.link.text
+            self.finish_callback()
+
