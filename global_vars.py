@@ -503,3 +503,18 @@ async def create_user():
     print(res)
     global user
     user = User(*res[0])
+
+async def check_if_summarised(note_id):
+    q = 'select summarised from notes where note_id=%s'
+    params = (note_id,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if res[0][0] == 0:
+        return False
+    return True
+
+async def set_summarised(note_id):
+    q = 'update notes set summarised=1 where note_id=%s'
+    params = (note_id,)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()

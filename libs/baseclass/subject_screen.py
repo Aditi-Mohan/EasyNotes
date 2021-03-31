@@ -10,6 +10,7 @@ from kivy.uix.label import Label
 from kivymd.utils import asynckivy
 from kivy.core.audio import SoundLoader
 from kivy.uix.videoplayer import VideoPlayer
+from kivy.core.clipboard import Clipboard
 
 from libs.baseclass.root_screen import RallyRootScreen
 from libs.baseclass.add_unit_dialog import AddUnitDialog
@@ -17,10 +18,11 @@ from libs.baseclass.file_chooser import ChooseFile
 from libs.baseclass.save_file_dialog import SaveFile
 from libs.baseclass.bookmark import Bookmark
 from functions.ibmspeechtotext import generate_transcript
-from functions.write_transcript_to_notion import write_transcript, write_transcript_with_bookmarks, write_transcript_with_frames_and_bookmarks, validate_page, create_page_from_link
+from functions.write_transcript_to_notion import write_transcript, write_transcript_with_bookmarks, write_transcript_with_frames_and_bookmarks, validate_page, create_page_from_link, add_summary, get_text_from
 from functions.audio_from_video import audio_from_video
 import utils.file_extensions as fe
 import global_vars as gv
+from functions.summarize import get_summary
 
 import os
 import asyncio
@@ -344,7 +346,7 @@ class SubjectScreen(MDScreen):
                         await gv.send_share_req(fid, note.note_id, self.title, unit_name, dt, note.note_title)
                         self._popup.dismiss()
 
-                    content = ShareInfoPopup(note_id=note.note_id, send_share=send_share_req)
+                    content = ShareInfoPopup(note_id=note.note_id, send_share=send_share_req, link=note.link)
                     self._popup.dismiss()
                     self._popup = Popup(title='Share Information', content=content, size_hint=(0.5, 0.5))
                     self._popup.open()
@@ -374,8 +376,31 @@ class SubjectScreen(MDScreen):
                     self._popup.dismiss()
                     self._popup = Popup(title='Confirm', content=content, size_hint=(0.5, 0.3))
                     self._popup.open()
-                content=OptionsPopup(share=share_callback, delete=delete_callback)
-                self._popup = Popup(title='Options', content=content, size_hint=(0.2, 0.3), pos=touch.pos)
+
+                async def summarise_callback():
+                    
+                    async def generate_and_add_summary(num_of_lines):
+                        # check status in db
+                            # generate summary
+                        text = await get_text_from(gv.user.token, gv.user.homepage_url, self.title, unit_name, note.note_title)
+                        summ = get_summary(text, num_of_lines)
+                        # write summary
+                        await add_summary(gv.user.token, gv.user.homepage_url, self.title, unit_name, note.note_title, summ)
+                        # change status in db
+                        await gv.set_summarised(note.note_id)
+                        self._popup.dismiss()
+                    
+                    summ = await gv.check_if_summarised(note.note_id)
+                    if not summ:
+                        content = SetNum(finish=generate_and_add_summary)
+                        self._popup.dismiss()
+                        self._popup = Popup(title='Set Parameters', content=content, size_hint=(0.5, 0.5))
+                        self._popup.open()
+                    else:
+                        print('Note Already Summarised')
+            
+                content=OptionsPopup(share=share_callback, delete=delete_callback, summarise=summarise_callback)
+                self._popup = Popup(title='Options', content=content, size_hint=(0.2, 0.35), pos=touch.pos)
                 self._popup.open()
             return True
     
@@ -412,11 +437,16 @@ class SubjectScreen(MDScreen):
 class OptionsPopup(FloatLayout):
     share = ObjectProperty()
     delete = ObjectProperty()
+    summarise = ObjectProperty()
+
+    def summ(self):
+        asynckivy.start(self.summarise())
 
 class ShareInfoPopup(FloatLayout):
     note_id = NumericProperty()
     send_share = ObjectProperty()
     delete = ObjectProperty()
+    link = StringProperty()
 
     def send_share_callback(self):
         fid = self.ids.fid.text
@@ -450,3 +480,17 @@ class UploadLinkPopup(FloatLayout):
             self.link = self.ids.link.text
             self.finish_callback()
 
+class SetNum(FloatLayout):
+    finish = ObjectProperty()
+    num_of_lines = 5
+
+    def inc_lines(self):
+        self.num_of_lines += 1
+        self.ids.nol.text = str(self.num_of_lines)
+
+    def dec_lines(self):
+        self.num_of_lines -= 1
+        self.ids.nol.text = str(self.num_of_lines)
+    
+    def complete(self):
+        asynckivy.start(self.finish(self.num_of_lines))

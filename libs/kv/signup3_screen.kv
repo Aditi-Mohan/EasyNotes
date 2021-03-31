@@ -18,18 +18,22 @@
         padding: dp(30)
         pos_hint: {"center_x": .5}
 
-		Image:
-        	source: f"{environ['RALLY_ROOT']}/assets/images/token.jpg"
-        	pos_hint: {"center_x": .5}
-            size_hint: None, None
-			width: 1500
-    		allow_stretch: True
-
 	    MDBoxLayout:
 	        adaptive_height: True
 	        orientation: "vertical"
 	        spacing: dp(20)
 
+			BoxLayout:
+				orientation: 'horizontal'
+				Image:
+					source: f"{environ['RALLY_ROOT']}/assets/images/stepsToken1.png"
+					size_hint_y: None  
+					height: dp(200)
+				Image:
+					source: f"{environ['RALLY_ROOT']}/assets/images/stepsToken2.png"
+					size_hint_y: None  
+					height: dp(200)
+				
 	        RallyTextField:
 				id: tk
 				focus: True
