@@ -13,9 +13,10 @@ class Note:
     datetime_of_creation = None
     link = None
     shared_from = None
+    summarised = None
     topics = []
 
-    def __init__(self, note_id, title, uid, sub_id, unit_id, dt_of_creation, link, num_of_bookmarks, shared_from):
+    def __init__(self, note_id, title, uid, sub_id, unit_id, dt_of_creation, link, num_of_bookmarks, shared_from, summarised):
         self.note_id = note_id
         self.note_title = title
         self.user_id = uid
@@ -25,6 +26,7 @@ class Note:
         self.link = link
         self.num_of_bookmarks = num_of_bookmarks
         self.shared_from = shared_from
+        self.summarised = summarised
 
 # one to many relationship - user -> notes
 # one to many relationship - subject -> notes

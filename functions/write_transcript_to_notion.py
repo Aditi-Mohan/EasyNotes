@@ -144,6 +144,7 @@ async def copy_page(token_v2, homepage_url, sub_name, unit_name, title, f_token_
     f_note_page = get_doc(f_unit_page, f_title)
     new_page = unit_page.children.add_new(PageBlock)
     _copy_properties(f_note_page, new_page)
+    new_page.children.add_new(TextBlock, title="")
     date_block = new_page.children.add_new(TextBlock, title="Received on: "+dt)
     date_block.set("format.block_color", "blue_background")
     new_page.title = title
@@ -195,3 +196,30 @@ async def create_page_from_link(link, token_v2, homepage_url, sub_name, unit_nam
     _copy_properties(old_page, new_page)
     new_page.title = title
     return new_page.get_browseable_url()
+
+async def add_summary(token_v2, homepage_url, sub_name, unit_name, title, summary):
+    client = NotionClient(token_v2=token_v2)
+    homepage = client.get_block(homepage_url)
+    sub_page = get_doc(homepage, sub_name)
+    unit_page = get_doc(sub_page, unit_name)
+    note_page = get_doc(unit_page, title)
+    note_page.children.add_new(TextBlock, title='')
+    note_page.children.add_new(TextBlock, title='')
+    note_page.children.add_new(TextBlock, title='')
+    note_page.children.add_new(SubheaderBlock, title='Summary')
+    note_page.children.add_new(DividerBlock)
+    for each in summary:
+        note_page.children.add_new(TextBlock, title=each)
+
+async def get_text_from(token, homepage_url, sub_name, unit_name, title):
+    client = NotionClient(token_v2=token)
+    homepage = client.get_block(homepage_url)
+    sub_page = get_doc(homepage, sub_name)
+    unit_page = get_doc(sub_page, unit_name)
+    page = get_doc(unit_page, title)
+    text = ''
+    for each in page.children:
+        if each.__class__ == TextBlock or each.__class__ == CalloutBlock:
+            # if each.title.startswith('')
+            text = text + ' ' + each.title
+    return text

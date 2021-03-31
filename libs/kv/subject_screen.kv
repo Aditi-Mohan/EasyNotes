@@ -98,6 +98,10 @@
             on_release: root.share()
         
         OneLineListItem:
+            text: 'SUMMARISE'
+            on_release: root.summ()
+
+        OneLineListItem:
             text: 'DELETE'
             bg_color: 1, 0, 0, 1
             on_release: root.delete()
@@ -178,3 +182,37 @@
             text: 'ADD'
             pos_hint: {'x': 0.775, 'y': 0.6}
 	    	on_release: root.validate()
+
+<SetNum>:
+    FloatLayout:
+
+        Label:
+            text: 'Number Of Lines: '
+            font_size: 20
+            pos_hint: {'x': 0.55, 'y': 0.8}
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 0.3, 0.2
+            pos_hint: {'x': 0.9, 'y': 1.1}
+
+            MDIconButton:
+                icon: 'minus'
+                on_press: root.dec_lines()
+            
+            Label:
+                id: nol
+                text: '5'
+                font_size: 24
+                text_size: self.size
+                #text_size: root.width*0.5, root.height*0.2
+                haling: 'middle'
+
+            MDIconButton:
+                icon: 'plus'
+                on_press: root.inc_lines()
+
+        MDFillRoundFlatButton:
+            text: 'ADD'
+            pos_hint: {'x': 0.95, 'y': 0.7}
+	    	on_release: root.complete()
