@@ -23,6 +23,8 @@ pending = []
 friends = []
 notifs = []
 pending_shares = []
+new_usernm = ''
+pass_changed = False
 
 async def get_subs(uid):
     q = 'select * from subject where uid=%s'
@@ -119,7 +121,7 @@ async def get_latest_notes():
 async def clean_up():
     if latest_notes_loaded:
         viewname = 'latest_notes_'+str(user.uid)
-        q = 'drop view {}'.format(viewname)
+        q = 'drop view if exists {}'.format(viewname)
         db.mycursor.execute(q)
         db.mydb.commit()
     # viewname = 'quick_links_from_names_'+str(user.uid)
@@ -518,3 +520,34 @@ async def set_summarised(note_id):
     params = (note_id,)
     db.mycursor.execute(q, params)
     db.mydb.commit()
+
+def signout():
+    user = None
+    newuser = None
+    subjects = []
+    notes = {}
+    units = {}
+    latest_notes_loaded = False
+    latest_notes = []
+    quick_links_from_names_loaded = False
+    pending = []
+    friends = []
+    notifs = []
+    pending_shares = []
+    # new_usernm = ''
+
+async def change_username(nnm):
+    q = 'update user set name=%s where uid=%s'
+    params = (nnm, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    global new_usernm
+    new_usernm = nnm
+
+async def set_password(npass):
+    q = 'update user set password=%s where uid=%s'
+    params = (npass, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    global pass_changed
+    pass_changed = True

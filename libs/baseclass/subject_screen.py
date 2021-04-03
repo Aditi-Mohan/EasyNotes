@@ -380,7 +380,6 @@ class SubjectScreen(MDScreen):
                 async def summarise_callback():
                     
                     async def generate_and_add_summary(num_of_lines):
-                        # check status in db
                             # generate summary
                         text = await get_text_from(gv.user.token, gv.user.homepage_url, self.title, unit_name, note.note_title)
                         summ = get_summary(text, num_of_lines)
@@ -389,7 +388,8 @@ class SubjectScreen(MDScreen):
                         # change status in db
                         await gv.set_summarised(note.note_id)
                         self._popup.dismiss()
-                    
+                        
+                    # check status in db
                     summ = await gv.check_if_summarised(note.note_id)
                     if not summ:
                         content = SetNum(finish=generate_and_add_summary)

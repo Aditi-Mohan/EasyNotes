@@ -4,3 +4,108 @@
 
 		MDList:
 			id: _list
+
+			OneLineListItem:
+                text: "Change Username"
+				divider:"Inset"
+				font_size: 24
+				on_release: root.change_username()
+
+#			OneLineListItem:
+#                text: "Change Email Address"
+#				divider:"Inset"
+#				font_size: 24
+
+			OneLineListItem:
+                text: "Change Password"
+				divider:"Inset"
+				font_size: 24
+				on_release: root.change_password()
+
+			OneLineListItem:
+                text: "Sign out"
+				divider:"Inset"
+				font_size: 24
+				on_release: root.signout()
+
+			OneLineListItem:
+                text: "Delete Account"
+				divider:"Inset"
+				font_size: 24
+				theme_text_color: 'Custom'
+				text_color: 1, 0, 0, 1
+				#on_release:
+
+<ChangeUsernamePopup>:
+	FloatLayout:
+	    RallyTextField:
+			id: nnm
+			focus: True
+	        hint_text: "Username"
+			size_hint_x: 0.9
+			pos_hint: {'x': 0.6, 'y': 1.3}
+
+		MDFillRoundFlatButton:
+			text: "Change"
+			font_size: 18
+			text_color: 1, 1, 1, 1
+			pos_hint: {'x': 0.95, 'y': 0.8}
+			on_release: root.cusn()
+
+<RefreshPopup>:
+	FloatLayout:
+		Label:
+			text: 'You need to LogIn again for the system to Update correctly'
+			pos_hint: {'x': 0.6, 'y': 1.3}
+			text_size: self.size
+		
+		MDFillRoundFlatButton:
+			text: "SignOut"
+			font_size: 18
+			text_color: 1, 1, 1, 1
+			pos_hint: {'x': 0.95, 'y': 0.8}
+			on_release: root.signout()
+
+<ConfPassword>:
+	FloatLayout:
+	    RallyTextField:
+			id: curr_pass
+			focus: True
+	        password: True
+	        password_mask: "*"
+	        hint_text: "Current Password"
+			size_hint_x: 0.9
+			pos_hint: {'x': 0.6, 'y': 1.3}
+
+		MDFillRoundFlatButton:
+			text: "Next"
+			font_size: 18
+			text_color: 1, 1, 1, 1
+			pos_hint: {'x': 0.95, 'y': 0.8}
+			on_release: root.conf(curr_pass.text)
+
+<NewPasswordPopup>:
+	FloatLayout:
+	    RallyTextField:
+			id: pw
+			focus: True
+	        password: True
+	        password_mask: "*"
+	        hint_text: "New Password"
+			size_hint_x: 0.9
+			pos_hint: {'x': 0.6, 'y': 1.1}
+
+	    RallyTextField:
+			id: cpw
+	        password: True
+	        password_mask: "*"
+	        hint_text: "Confirm Password"
+			size_hint_x: 0.9
+			pos_hint: {'x': 0.6, 'y': 0.8}
+
+		MDFillRoundFlatButton:
+			text: "Change"
+			font_size: 18
+			text_color: 1, 1, 1, 1
+			pos_hint: {'x': 0.95, 'y': 0.5}
+			on_release: root.finish()
