@@ -23,6 +23,9 @@ pending = []
 friends = []
 notifs = []
 pending_shares = []
+new_usernm = ''
+pass_changed = False
+signed_out = False
 
 async def get_subs(uid):
     q = 'select * from subject where uid=%s'
@@ -119,7 +122,7 @@ async def get_latest_notes():
 async def clean_up():
     if latest_notes_loaded:
         viewname = 'latest_notes_'+str(user.uid)
-        q = 'drop view {}'.format(viewname)
+        q = 'drop view if exists {}'.format(viewname)
         db.mycursor.execute(q)
         db.mydb.commit()
     # viewname = 'quick_links_from_names_'+str(user.uid)
@@ -450,7 +453,7 @@ async def delete_note(note_id):
     db.mycursor.execute(q, params)
     res = db.mycursor.fetchall()
     if len(res) > 0:
-        print('Tnere is a pending request for this note, You can\'t delete this note until the request is accepted or rejected')
+        print('There is a pending request for this note, You can\'t delete this note until the request is accepted or rejected')
     else:
         q = 'select note_id from notes where shared_from=%s'
         params = (note_id,)
@@ -470,7 +473,7 @@ async def delete_note(note_id):
         db.mydb.commit()
         return True
     return False
-    # shared notes cannot be deleted - or - delete abd remove shared from as well so that the other use now has ownership
+    # delete and remove shared from as well so that the other user now has ownership
 
 # async def get_share_note_info(note_id):
 #     q = 'select s.req_from, u.name, u.college, u.course, u.semester, s.note_id, s.note_title, s.sub_name, s.unit_name, s.sent_on from share_request s inner join user u on u.uid=s.req_from where s.req_to=%s and s.note_id=%s'
@@ -518,3 +521,118 @@ async def set_summarised(note_id):
     params = (note_id,)
     db.mycursor.execute(q, params)
     db.mydb.commit()
+
+def signout():
+    global signed_out
+    signed_out = True
+
+def reset():
+    global user, newuser, subjects, notes, units, latest_notes_loaded, latest_notes, quick_links_from_names_loaded
+    global pending, friends, notifs, pending_shares
+    user = None
+    newuser = None
+    subjects = []
+    notes = {}
+    units = {}
+    latest_notes_loaded = False
+    latest_notes = []
+    quick_links_from_names_loaded = False
+    pending = []
+    friends = []
+    notifs = []
+    pending_shares = []
+    # new_usernm = ''
+
+async def change_username(nnm):
+    q = 'update user set name=%s where uid=%s'
+    params = (nnm, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    global new_usernm
+    new_usernm = nnm
+
+async def set_password(npass):
+    q = 'update user set password=%s where uid=%s'
+    params = (npass, user.uid)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+    global pass_changed
+    pass_changed = True
+
+async def delete_account():
+    if len(pending_shares) > 0:
+        print('Your have pending share requests\nRejecting Requests...')
+        # reject all pending requests
+        for each in pending_shares:
+            dt1 = datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
+            await reject_share_req(each.req_from, each.sent_on, each.note_id, each.note_title, dt1)
+
+    await get_friends()
+
+    # delete share requests sent that are pending
+    q = 'select req_to, sent_on from share_request where req_from=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if len(res) > 0:
+        print('Cancelling all sent pending share requests...')
+        for each in res:
+            dq = 'delete from notifications where notif_for=%s and dt=%s'
+            params = (each[0], each[1])
+            db.mycursor.execute(dq, each)
+        dq = 'delete from share_request where req_from=%s'
+        params = (user.uid,)
+        db.mycursor.execute(dq, params)
+        db.mydb.fetchall()
+
+    if len(friends) > 0:
+        print('Unfriending Friends...')
+        # remove from friends
+        for each in friends:
+            dt = datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
+            await remove_friend(each.friend_id, dt)
+
+    q = 'select note_id from notes where uid=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    # delete notes
+    for each in res:
+        await delete_note(each[0])
+
+    # delete untis
+    q = 'delete from units where uid=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+    # delete subjects
+    q = 'delete from subject where uid=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+    # delete notifications for this user
+    q = 'delete from notifications where notif_for=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+    # delete user
+    q = 'delete from user where uid=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
+    global signed_out
+    signed_out = True
+
+async def get_uid_for_nm(nm):
+    q = 'select uid from user where name=%s'
+    params = (nm,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if len(res) == 0:
+        print('Username not valid')
+        return None
+    return res[0][0]

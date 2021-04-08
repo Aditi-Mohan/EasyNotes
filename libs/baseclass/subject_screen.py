@@ -380,7 +380,6 @@ class SubjectScreen(MDScreen):
                 async def summarise_callback():
                     
                     async def generate_and_add_summary(num_of_lines):
-                        # check status in db
                             # generate summary
                         text = await get_text_from(gv.user.token, gv.user.homepage_url, self.title, unit_name, note.note_title)
                         summ = get_summary(text, num_of_lines)
@@ -389,7 +388,8 @@ class SubjectScreen(MDScreen):
                         # change status in db
                         await gv.set_summarised(note.note_id)
                         self._popup.dismiss()
-                    
+                        
+                    # check status in db
                     summ = await gv.check_if_summarised(note.note_id)
                     if not summ:
                         content = SetNum(finish=generate_and_add_summary)
@@ -449,15 +449,20 @@ class ShareInfoPopup(FloatLayout):
     link = StringProperty()
 
     def send_share_callback(self):
-        fid = self.ids.fid.text
-        if fid.isdecimal():
-            is_fid_friend = False
-            async def validate_req():
-                nonlocal is_fid_friend
+        nm = self.ids.fid.text
+        fid = None
+        is_fid_friend = False
+        async def validate_req():
+            nonlocal is_fid_friend, fid
+            fid = await gv.get_uid_for_nm(nm)
+            valid = fid is not None
+            if valid:
                 is_fid_friend = await gv.check_if_fid_friend(int(fid), self.note_id)
-            asynckivy.start(validate_req())
-            if is_fid_friend:
-                asynckivy.start(self.send_share(int(fid)))
+            else:
+                print('Username not valid')
+        asynckivy.start(validate_req())
+        if is_fid_friend:
+            asynckivy.start(self.send_share(int(fid)))
 
 class Confirmation(FloatLayout):
     delete = ObjectProperty()

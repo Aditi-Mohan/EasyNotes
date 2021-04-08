@@ -9,6 +9,14 @@ from libs.baseclass.root_screen import RallyRootScreen
 
 class RallyRegisterScreen(MDScreen):
 
+    def on_pre_enter(self, *args):
+        if gv.new_usernm != '':
+            self.ids.nm.text = gv.new_usernm
+            gv.new_usernm = ''
+        if gv.pass_changed:
+            self.ids.pw.text = ''
+            gv.pass_changed = False
+
     def login(self,name, passw):
         q = 'select * from user where name=%s and password=%s'
         db.mycursor.execute(q, (name, passw))
@@ -17,6 +25,9 @@ class RallyRegisterScreen(MDScreen):
         if len(a) == 1:
             user = User(*a[0])
             async def set_globals():
+                if gv.signed_out:
+                    gv.reset()
+                    gv.signed_out = False
                 gv.user = user
                 temp = await gv.get_subs(user.uid)
             asynckivy.start(set_globals())
