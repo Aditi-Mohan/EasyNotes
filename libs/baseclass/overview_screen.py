@@ -24,86 +24,87 @@ class RallyOverviewScreen(MDScreen):
     pending_shares = []
 
     def on_pre_enter(self, *args):
-        self.username = gv.user.name
-        self.last_active = gv.user.last_login.strftime(r"%m/%d/%Y, %H:%M:%S")
-        if len(gv.latest_notes) == 0:
-            asynckivy.start(gv.get_latest_notes())
-        asynckivy.start(gv.get_notifications())
-        asynckivy.start(gv.get_pending_shares())
-        self.recent_notes = gv.latest_notes
-        self.notifs = gv.notifs
-        self.pending_shares = gv.pending_shares
-        if len(self.children) != 0:
-            ntl = self.ids.notifs
-            ntl.clear_widgets()
-            ntl.add_widget(
-                OneLineListItem(
-                    text='Notifications',
-                    font_style='H6',
-                    # on_release=delete all notifications
+        if not gv.signed_out:
+            self.username = gv.user.name
+            self.last_active = gv.user.last_login.strftime(r"%m/%d/%Y, %H:%M:%S")
+            if len(gv.latest_notes) == 0:
+                asynckivy.start(gv.get_latest_notes())
+            asynckivy.start(gv.get_notifications())
+            asynckivy.start(gv.get_pending_shares())
+            self.recent_notes = gv.latest_notes
+            self.notifs = gv.notifs
+            self.pending_shares = gv.pending_shares
+            if len(self.children) != 0:
+                ntl = self.ids.notifs
+                ntl.clear_widgets()
+                ntl.add_widget(
+                    OneLineListItem(
+                        text='Notifications',
+                        font_style='H6',
+                        # on_release=delete all notifications
+                    )
+                )      
+                lst = self.ids.list_view
+                lst.clear_widgets()
+                lst.add_widget(
+                    OneLineListItem(
+                        text='Quick Access',
+                        font_style='H6',
+                        bg_color=[40/255, 44/255, 64/255,1],
+                    )
                 )
-            )      
-            lst = self.ids.list_view
-            lst.clear_widgets()
-            lst.add_widget(
-                OneLineListItem(
-                    text='Quick Access',
-                    font_style='H6',
-                    bg_color=[40/255, 44/255, 64/255,1],
+                plt = self.ids.pending_shares
+                plt.clear_widgets()
+                plt.add_widget(
+                    OneLineListItem(
+                        text='Pending Note Shares',
+                        font_style='H6',
+                        bg_color=[40/255, 44/255, 64/255,1],
+                    )
                 )
-            )
-            plt = self.ids.pending_shares
-            plt.clear_widgets()
-            plt.add_widget(
-                OneLineListItem(
-                    text='Pending Note Shares',
-                    font_style='H6',
-                    bg_color=[40/255, 44/255, 64/255,1],
-                )
-            )
-            for i in self.recent_notes:
-                sub_name = gv.get_name_for_sub(i.subject_id)
-                unit_name = ''
-                async def get_unitname():
-                    nonlocal unit_name
-                    unit_name = await gv.get_name_for_unit(i.subject_id, sub_name, i.unit_id)
-                asynckivy.start(get_unitname())
-                item = ThreeLineIconListItem(
-                    text = i.note_title,
-                    secondary_text = 'from '+unit_name+' of '+sub_name,
-                    tertiary_text = 'On '+i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+"    "+str(i.num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
-                    bg_color=[40/255, 44/255, 64/255,1],
-                    on_release = self.open_note,
-                )
-                icon = IconLeftWidget(
-                    icon="note",
-                    theme_text_color="Custom",
-                    text_color=gv.get_color_for_sub(i.subject_id),
-                )
-                item.add_widget(icon)
-                lst.add_widget(item)
-            for i in self.notifs:
-                item = TwoLineIconListItem(
-                    text=i.notif_title,
-                    secondary_text=i.dt.strftime(r"%m/%d/%Y, %H:%M:%S"),
-                    on_release=self.open_notif,
-                )
-                icon = IconLeftWidget(
-                    icon='message'
-                )
-                item.add_widget(icon)
-                ntl.add_widget(item)
-            for i in self.pending_shares:
-                item = TwoLineIconListItem(
-                    text=i.note_title,
-                    secondary_text='From: '+i.friend_name,
-                    on_release=self.address_pending_shares,
-                )
-                icon = IconLeftWidget(
-                    icon='note-plus'
-                )
-                item.add_widget(icon)
-                plt.add_widget(item)
+                for i in self.recent_notes:
+                    sub_name = gv.get_name_for_sub(i.subject_id)
+                    unit_name = ''
+                    async def get_unitname():
+                        nonlocal unit_name
+                        unit_name = await gv.get_name_for_unit(i.subject_id, sub_name, i.unit_id)
+                    asynckivy.start(get_unitname())
+                    item = ThreeLineIconListItem(
+                        text = i.note_title,
+                        secondary_text = 'from '+unit_name+' of '+sub_name,
+                        tertiary_text = 'On '+i.datetime_of_creation.strftime(r"%m/%d/%Y, %H:%M:%S")+"    "+str(i.num_of_bookmarks)+(' bookmarks' if i.num_of_bookmarks>1 else ' bookmark'),
+                        bg_color=[40/255, 44/255, 64/255,1],
+                        on_release = self.open_note,
+                    )
+                    icon = IconLeftWidget(
+                        icon="note",
+                        theme_text_color="Custom",
+                        text_color=gv.get_color_for_sub(i.subject_id),
+                    )
+                    item.add_widget(icon)
+                    lst.add_widget(item)
+                for i in self.notifs:
+                    item = TwoLineIconListItem(
+                        text=i.notif_title,
+                        secondary_text=i.dt.strftime(r"%m/%d/%Y, %H:%M:%S"),
+                        on_release=self.open_notif,
+                    )
+                    icon = IconLeftWidget(
+                        icon='message'
+                    )
+                    item.add_widget(icon)
+                    ntl.add_widget(item)
+                for i in self.pending_shares:
+                    item = TwoLineIconListItem(
+                        text=i.note_title,
+                        secondary_text='From: '+i.friend_name,
+                        on_release=self.address_pending_shares,
+                    )
+                    icon = IconLeftWidget(
+                        icon='note-plus'
+                    )
+                    item.add_widget(icon)
+                    plt.add_widget(item)
     
     def scan_for_friend_recom(self):
         return 

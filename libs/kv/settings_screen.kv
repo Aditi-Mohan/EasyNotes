@@ -6,6 +6,12 @@
 			id: _list
 
 			OneLineListItem:
+				text: "View UID"
+				divider:"Inset"
+				font_size: 24
+				on_release: root.see_uid()
+
+			OneLineListItem:
                 text: "Change Username"
 				divider:"Inset"
 				font_size: 24
@@ -34,7 +40,7 @@
 				font_size: 24
 				theme_text_color: 'Custom'
 				text_color: 1, 0, 0, 1
-				#on_release:
+				on_release: root.delete_acc()
 
 <ChangeUsernamePopup>:
 	FloatLayout:
@@ -109,3 +115,26 @@
 			text_color: 1, 1, 1, 1
 			pos_hint: {'x': 0.95, 'y': 0.5}
 			on_release: root.finish()
+
+<UIDPopup>:
+	FloatLayout:
+
+		BoxLayout:
+			pos_hint: {'x': 1.4, 'y': 2.5}
+			size_hint: 0.9, 0.2
+            canvas:
+                Color:
+                    rgb: 18/255, 18/255, 18/255, 0.3
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+			
+			Label:
+				text: root.uid
+				#text_size: root.width*0.8, root.height*0.2
+				haling: 'center'
+		
+		MDFillRoundFlatButton:
+			text: 'CLOSE'
+			on_release: root.close()
+			pos_hint: {'x': 1.6, 'y': 2.0}

@@ -25,6 +25,9 @@ class RallyRegisterScreen(MDScreen):
         if len(a) == 1:
             user = User(*a[0])
             async def set_globals():
+                if gv.signed_out:
+                    gv.reset()
+                    gv.signed_out = False
                 gv.user = user
                 temp = await gv.get_subs(user.uid)
             asynckivy.start(set_globals())

@@ -1,4 +1,4 @@
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
 
@@ -33,6 +33,13 @@ class RallySettingsScreen(MDScreen):
         #         list_item.bind(on_release=self.goto_register_screen)
         #         self.ids._list.add_widget(list_item)
         #     self.list_created = True
+    def see_uid(self):
+        def close():
+            self._popup.dismiss()
+
+        content = UIDPopup(uid=str(gv.user.uid), close=close)
+        self._popup = Popup(title='UID', content=content, size_hint=(0.3, 0.3))
+        self._popup.open()
 
     def change_username(self):
         async def change_usernm_callback(new_usernm):
@@ -89,6 +96,14 @@ class RallySettingsScreen(MDScreen):
         content = ConfPassword(conf=check_curr_password)
         self._popup = Popup(title='Confirm Current Password', content=content, size_hint=(0.5, 0.5))
         self._popup.open()
+    
+    def delete_acc(self):
+        async def del_acc():
+            await gv.delete_account()
+            print('cleaning up...')
+            await gv.clean_up()
+        asynckivy.start(del_acc())
+        self.goto_register_screen()
 
 class ChangeUsernamePopup(FloatLayout):
     cusn_callback = ObjectProperty()
@@ -122,3 +137,7 @@ class NewPasswordPopup(FloatLayout):
             asynckivy.start(self.set_pass(self.ids.pw.text))
         else:
             print('Passwords do not match')
+
+class UIDPopup(FloatLayout):
+    uid = StringProperty()
+    close = ObjectProperty()

@@ -25,6 +25,7 @@ notifs = []
 pending_shares = []
 new_usernm = ''
 pass_changed = False
+signed_out = False
 
 async def get_subs(uid):
     q = 'select * from subject where uid=%s'
@@ -522,6 +523,12 @@ async def set_summarised(note_id):
     db.mydb.commit()
 
 def signout():
+    global signed_out
+    signed_out = True
+
+def reset():
+    global user, newuser, subjects, notes, units, latest_notes_loaded, latest_notes, quick_links_from_names_loaded
+    global pending, friends, notifs, pending_shares
     user = None
     newuser = None
     subjects = []
@@ -571,8 +578,12 @@ async def delete_account():
         print('Cancelling all sent pending share requests...')
         for each in res:
             dq = 'delete from notifications where notif_for=%s and dt=%s'
+            params = (each[0], each[1])
             db.mycursor.execute(dq, each)
-            # dq = 'delete from share_request where '
+        dq = 'delete from share_request where req_from=%s'
+        params = (user.uid,)
+        db.mycursor.execute(dq, params)
+        db.mydb.fetchall()
 
     if len(friends) > 0:
         print('Unfriending Friends...')
@@ -587,7 +598,7 @@ async def delete_account():
     res = db.mycursor.fetchall()
     # delete notes
     for each in res:
-        delete_note(each[0])
+        await delete_note(each[0])
 
     # delete untis
     q = 'delete from units where uid=%s'
