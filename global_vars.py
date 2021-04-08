@@ -612,8 +612,27 @@ async def delete_account():
     db.mycursor.execute(q, params)
     db.mydb.commit()
 
+    # delete notifications for this user
+    q = 'delete from notifications where notif_for=%s'
+    params = (user.uid,)
+    db.mycursor.execute(q, params)
+    db.mydb.commit()
+
     # delete user
     q = 'delete from user where uid=%s'
     params = (user.uid,)
     db.mycursor.execute(q, params)
     db.mydb.commit()
+
+    global signed_out
+    signed_out = True
+
+async def get_uid_for_nm(nm):
+    q = 'select uid from user where name=%s'
+    params = (nm,)
+    db.mycursor.execute(q, params)
+    res = db.mycursor.fetchall()
+    if len(res) == 0:
+        print('Username not valid')
+        return None
+    return res[0][0]

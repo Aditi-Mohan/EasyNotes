@@ -159,17 +159,20 @@ class RequestPopup(FloatLayout):
     callback = ObjectProperty()
 
     def evaluate(self):
-        req_to = self.ids.uid.text
-        if req_to.isdecimal():
-            valid = False
-            async def check_uid():
-                nonlocal valid
-                valid = await gv.is_uid_valid(int(req_to))
-            asynckivy.start(check_uid())
-            if valid:
-                print(valid)
-                comments = self.ids.comments.text
-                asynckivy.start(self.callback(int(req_to), comments))
+        nm = self.ids.uid.text
+        req_to = None
+        # if req_to.isdecimal():
+        valid = False
+        async def check_uid():
+            nonlocal valid, req_to
+            req_to = await gv.get_uid_for_nm(nm)
+            valid = req_to is not None
+            # valid = await gv.is_uid_valid(int(req_to))
+        asynckivy.start(check_uid())
+        if valid:
+            print(valid)
+            comments = self.ids.comments.text
+            asynckivy.start(self.callback(int(req_to), comments))
 
 class AddressRequest(FloatLayout):
     accept_callback = ObjectProperty()

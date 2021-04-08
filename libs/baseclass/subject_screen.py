@@ -449,15 +449,20 @@ class ShareInfoPopup(FloatLayout):
     link = StringProperty()
 
     def send_share_callback(self):
-        fid = self.ids.fid.text
-        if fid.isdecimal():
-            is_fid_friend = False
-            async def validate_req():
-                nonlocal is_fid_friend
+        nm = self.ids.fid.text
+        fid = None
+        is_fid_friend = False
+        async def validate_req():
+            nonlocal is_fid_friend, fid
+            fid = await gv.get_uid_for_nm(nm)
+            valid = fid is not None
+            if valid:
                 is_fid_friend = await gv.check_if_fid_friend(int(fid), self.note_id)
-            asynckivy.start(validate_req())
-            if is_fid_friend:
-                asynckivy.start(self.send_share(int(fid)))
+            else:
+                print('Username not valid')
+        asynckivy.start(validate_req())
+        if is_fid_friend:
+            asynckivy.start(self.send_share(int(fid)))
 
 class Confirmation(FloatLayout):
     delete = ObjectProperty()
